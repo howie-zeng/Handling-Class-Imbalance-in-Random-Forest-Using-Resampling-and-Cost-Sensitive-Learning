@@ -27,10 +27,13 @@ Imports:
     ParBayesianOptimization,
     stringr,
     parallel,
-    rlang
+    rlang,
+    knitr,
+    rmarkdown
 Suggests: 
     testthat (>= 3.0.0),
     knitr,
     rmarkdown
 Depends: R (>= 4.0.0)
 VignetteBuilder: knitr
+

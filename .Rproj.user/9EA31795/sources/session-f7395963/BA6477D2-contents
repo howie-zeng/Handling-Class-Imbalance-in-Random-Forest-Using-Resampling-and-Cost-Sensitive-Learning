@@ -49,7 +49,7 @@ seed <- 2024
 set.seed(seed)
 
 # Function to check if the package exists and install if missing
-install_and_load <- function(package_name, github_repo, install=False) {
+install_and_load <- function(package_name, github_repo, install=FALSE) {
   if (install | !requireNamespace(package_name, quietly = TRUE)) {
     cat(paste("Package", package_name, "not found. Installing from GitHub...\n"))
     devtools::install_github(github_repo)
@@ -62,7 +62,7 @@ install_and_load <- function(package_name, github_repo, install=False) {
 }
 
 # Example Usage
-install_and_load("ImbalanceRF", "howie-zeng/MyPackage", install=True)
+install_and_load("ImbalanceRF", "howie-zeng/MyPackage", install=TRUE)
 
 data <- load_data()
 ```
