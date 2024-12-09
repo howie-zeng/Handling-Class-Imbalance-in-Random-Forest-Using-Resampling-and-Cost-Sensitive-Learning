@@ -11,9 +11,6 @@
 #' @param ntree Number of trees for imputation (for `split_train`). Default is 20.
 #' @param scale_cols Columns to scale (for `split_train`). If NULL, numeric columns are scaled. Default is NULL.
 #' @param seed Random seed for reproducibility. Default is 2024.
-#' @return A named list of split data for each dataset, with components depending on the splitting strategy:
-#'   - For `"Bank Fraud Dataset"`: \code{X_train}, \code{y_train}, \code{X_test}, \code{y_test}.
-#'   - For other datasets: \code{train}, \code{validation}.
 #' @export
 split_data <- function(df_list, target_col, train_ratio = 0.75, maxiter = 2, ntree = 20, scale_cols = NULL, seed = 2024) {
   set.seed(seed)
