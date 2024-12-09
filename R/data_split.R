@@ -53,16 +53,13 @@ split_data <- function(df_list, target_col, train_ratio = 0.75, maxiter = 2, ntr
 
 split_train_test_by_month <- function(data, target_col, month_col, train_months, test_months, seed = 2024) {
   set.seed(seed)
-  imputed_data <- missForest(xmis = data, maxiter = 10, ntree = 20)$ximp
 
-  train_data <- data %>% filter(!!sym(month_col) %in% train_months)
-  test_data <- data %>% filter(!!sym(month_col) %in% test_months)
+  imputed_data <- missForest(xmis = data, maxiter = 2, ntree = 20)$ximp
 
-  X_train <- train_data %>% select(-all_of(target_col))
-  y_train <- train_data[[target_col]]
+  train_data <- imputed_data %>% filter(!!sym(month_col) %in% train_months)
+  test_data <- imputed_data %>% filter(!!sym(month_col) %in% test_months)
 
-  X_test <- test_data %>% select(-all_of(target_col))
-  y_test <- test_data[[target_col]]
+  scale_cols <- names(imputed_data)[sapply(imputed_data, is.numeric) & names(imputed_data) != target_col]
 
   num_cols <- names(X_train)[sapply(X_train, is.numeric)]
 
@@ -71,18 +68,12 @@ split_train_test_by_month <- function(data, target_col, month_col, train_months,
   }
 
 
-
-  X_train[num_cols] <- lapply(X_train[num_cols], robust_scaler)
-  X_test[num_cols] <- lapply(X_test[num_cols], robust_scaler)
-
-  train <- cbind(X_train, !!sym(target_col) := y_train)
-  test <- cbind(X_test, !!sym(target_col) := y_test)
+  train_data[scale_cols] <- lapply(train_data[scale_cols], robust_scaler)
+  test_data[scale_cols] <- lapply(test_data[scale_cols], robust_scaler)
 
   list(
-    X_train = X_train,
-    y_train = y_train,
-    X_test = X_test,
-    y_test = y_test
+    train = train_data,
+    validation = test_data
   )
 }
 
