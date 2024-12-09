@@ -64,10 +64,6 @@ process_all_dataframes <- function(df_list) {
         df <- process_credit_card_data(df_credit_data, df)
       }
 
-      # Apply Label Encoding to All Categorical Columns
-      categorical_columns <- sapply(df, is.factor) | sapply(df, is.character)
-      df[categorical_columns] <- lapply(df[categorical_columns], as.factor)
-
       # Store processed dataframe
       processed_list[[name]] <- df
     }, error = function(e) {
@@ -78,3 +74,4 @@ process_all_dataframes <- function(df_list) {
 
   return(processed_list)
 }
+

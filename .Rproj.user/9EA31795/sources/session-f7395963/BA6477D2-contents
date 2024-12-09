@@ -47,17 +47,29 @@ library(smotefamily)
 library(parallel)
 seed <- 2024
 set.seed(seed)
+
+# Function to check if the package exists and install if missing
+install_and_load <- function(package_name, github_repo, install=False) {
+  if (install | !requireNamespace(package_name, quietly = TRUE)) {
+    cat(paste("Package", package_name, "not found. Installing from GitHub...\n"))
+    devtools::install_github(github_repo)
+  } else {
+    cat(paste("Package", package_name, "already installed. Loading it...\n"))
+  }
+  
+  # Load the package
+  library(package_name, character.only = TRUE)
+}
+
+# Example Usage
+install_and_load("ImbalanceRF", "howie-zeng/MyPackage", install=True)
+
+data <- load_data()
 ```
 
 ```{r}
-df_list <- load_data()
-```
-
-
-# Data Exploration
-```{r}
-
-
+df_list <- process_all_dataframes(data)
+explore_datasets(df_list)
 ```
 
 ```{r}
