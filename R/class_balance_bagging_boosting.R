@@ -202,7 +202,7 @@ bboost.data.frame <-
 
     #initialization
     x.nam <- names(x)
-    form <- as.formula(paste("y~ ", paste(x.nam, collapse = "+")))
+    form <- as.formula(paste("y ~ ", paste(x.nam, collapse = "+")))
     H      <- list()
     alpha  <- rep(0, iter)
     oldWeight <- rep(1/numRow, numRow)
