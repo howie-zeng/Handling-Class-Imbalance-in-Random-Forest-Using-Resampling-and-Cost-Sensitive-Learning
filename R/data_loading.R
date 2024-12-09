@@ -17,7 +17,7 @@ load_data <- function(data_dir = "data/") {
     df_diabetes <- read.csv(file.path(data_dir, "diabetes_binary_health_indicators_BRFSS2015.csv"), stringsAsFactors = FALSE)
     df_insurance <- read.csv(file.path(data_dir, "insurance_train.csv"), stringsAsFactors = FALSE)
     df_credit_card_fraud <- read.csv(file.path(data_dir, "creditcard.csv"), stringsAsFactors = FALSE)
-    df_bank_fraud <- read.csv(file.path(data_dir, "Base.csv"), stringsAsFactors = FALSE)
+    # df_bank_fraud <- read.csv(file.path(data_dir, "Base.csv"), stringsAsFactors = FALSE)
   }, error = function(e) {
     stop("Error loading data: ", e$message)
   })
@@ -28,7 +28,7 @@ load_data <- function(data_dir = "data/") {
   # Create list of datasets
   df_list <- list(
     "HR Dataset" = df_hr,
-    "Bank Fraud Dataset" = df_bank_fraud,
+    # "Bank Fraud Dataset" = df_bank_fraud,
     "Credit Card Fraud Dataset" = df_credit_card_fraud,
     "Diabetes Dataset" = df_diabetes,
     "Insurance Dataset" = df_insurance,
@@ -42,7 +42,7 @@ load_data <- function(data_dir = "data/") {
     target_col <- switch(name,
                          "Credit Card Fraud Dataset" = "Class",
                          "Diabetes Dataset" = "Diabetes_binary",
-                         "Bank Fraud Dataset" = "fraud_bool",
+                         # "Bank Fraud Dataset" = "fraud_bool",
                          "Insurance Dataset" = "Response",
                          "Credit Card Default Dataset" = "default.payment.next.month",
                          "Credit Card Approval Dataset" = "target",
@@ -53,7 +53,7 @@ load_data <- function(data_dir = "data/") {
     }
     return(df)
   })
-  names(df_list) <- c("HR Dataset", "Bank Fraud Dataset", "Credit Card Fraud Dataset",
+  names(df_list) <- c("HR Dataset", "Credit Card Fraud Dataset",
                       "Diabetes Dataset", "Insurance Dataset", "Credit Card Default Dataset",
                       "Credit Card Approval Dataset")
 
