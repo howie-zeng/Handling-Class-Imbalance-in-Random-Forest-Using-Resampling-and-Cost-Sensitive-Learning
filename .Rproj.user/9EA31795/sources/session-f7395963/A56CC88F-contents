@@ -3,7 +3,7 @@ Type: Package
 Title: Handling Class Imbalance in Random Forest with Resampling and Cost-Sensitive Techniques
 Version: 0.1.0
 Author: Haozhe Zeng [aut, cre]
-Maintainer: Haozhe Zeng <hz657@cornell.edu>
+Maintainer: Haozhe Zeng <hz657@cornell.edu.com>
 Description: 
     This package provides tools for addressing class imbalance in binary classification problems 
     using Random Forest. It implements resampling techniques (SMOTE, Borderline-SMOTE, undersampling), 
@@ -17,22 +17,23 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
     randomForest (>= 4.6-14),
-    caret (>= 6.0-88),
-    ROSE (>= 0.0-4),
-    dplyr (>= 1.0.0),
-    ggplot2 (>= 3.3.0),
-    DMwR2 (>= 0.2.2),
-    smotefamily (>= 1.3.1),
-    roxygen2 (>= 7.2.1),
-    ParBayesianOptimization (>= 1.2.0),
-    stringr (>= 1.4.0),
+    caret,
+    ROSE,
+    dplyr,
+    ggplot2,
+    DMwR2,
+    smotefamily,
+    roxygen2,
+    ParBayesianOptimization,
+    stringr,
     parallel,
-    rlang (>= 1.0.0),
-    knitr (>= 1.28),
-    rmarkdown (>= 2.0)
+    rlang,
+    knitr,
+    rmarkdown
 Suggests: 
     testthat (>= 3.0.0),
-    knitr (>= 1.28),
-    rmarkdown (>= 2.0)
+    knitr,
+    rmarkdown
 Depends: R (>= 4.0.0)
 VignetteBuilder: knitr
+

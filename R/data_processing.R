@@ -6,7 +6,7 @@
 #' @param df_list A named list of dataframes to process.
 #' @return A named list of processed dataframes.
 #' @importFrom dplyr %>% bind_rows mutate select
-
+#' @export
 process_all_dataframes <- function(df_list) {
   processed_list <- list()
 

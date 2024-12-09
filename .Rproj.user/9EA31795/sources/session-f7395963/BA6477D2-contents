@@ -54,8 +54,11 @@ set.seed(seed)
 
 # Function to check if the package exists and install if missing
 install_and_load <- function(package_name, github_repo, install=FALSE) {
-  if (install | !requireNamespace(package_name, quietly = TRUE)) {
+  if (!requireNamespace(package_name, quietly = TRUE)) {
     cat(paste("Package", package_name, "not found. Installing from GitHub...\n"))
+    devtools::install_github(github_repo)
+  } else if (install) {
+    detach("package:ImbalanceRF", unload = TRUE)
     devtools::install_github(github_repo)
   } else {
     cat(paste("Package", package_name, "already installed. Loading it...\n"))

@@ -3,7 +3,7 @@
     "path": "E:/OneDrive/Cornell/Fall 2024/STSCI 6520/Final Project/Final Project.Rmd",
     "project_path": null,
     "type": "r_markdown",
-    "hash": "1288086230",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1733696855296.0,
@@ -12,16 +12,16 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "34,0",
-        "scrollLine": "27",
-        "last_setup_crc32": "f73959634c7dd9da"
+        "cursorPosition": "66,20",
+        "scrollLine": "42",
+        "last_setup_crc32": "f7395963a1e704ae"
     },
     "folds": "",
-    "lastKnownWriteTime": 1733705143,
+    "lastKnownWriteTime": 1733705720,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1733705143340,
+    "last_content_update": 1733705720138,
     "read_only": false,
     "read_only_alternatives": []
 }
