@@ -3,7 +3,7 @@
     "path": "E:/OneDrive/Cornell/Fall 2024/STSCI 6520/Final Project/MyPackage/R/data_processing.R",
     "project_path": "R/data_processing.R",
     "type": "r_source",
-    "hash": "906129148",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1733696784906.0,
@@ -12,8 +12,8 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "61,0",
-        "scrollLine": "32"
+        "cursorPosition": "9,0",
+        "scrollLine": "0"
     },
     "folds": "",
     "lastKnownWriteTime": 1733704927,
