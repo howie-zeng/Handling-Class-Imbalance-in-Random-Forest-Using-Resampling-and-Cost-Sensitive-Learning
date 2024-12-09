@@ -64,22 +64,22 @@ split_train_test_by_month <- function(data, target_col, month_col, train_months,
 
   scaling_params <- lapply(train_data[scale_cols], function(col) scale(col, center = TRUE, scale = TRUE))
   # Apply scaling to train data
-  train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
-    scale(
-      train_data[[scale_cols[i]]],
-      center = attr(scaling_params[[i]], "scaled:center"),
-      scale = attr(scaling_params[[i]], "scaled:scale")
-    )
-  })
-
-  # Apply scaling to test data using training parameters
-  test_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
-    scale(
-      test_data[[scale_cols[i]]],
-      center = attr(scaling_params[[i]], "scaled:center"),
-      scale = attr(scaling_params[[i]], "scaled:scale")
-    )
-  })
+  # train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+  #   scale(
+  #     train_data[[scale_cols[i]]],
+  #     center = attr(scaling_params[[i]], "scaled:center"),
+  #     scale = attr(scaling_params[[i]], "scaled:scale")
+  #   )
+  # })
+  #
+  # # Apply scaling to test data using training parameters
+  # test_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+  #   scale(
+  #     test_data[[scale_cols[i]]],
+  #     center = attr(scaling_params[[i]], "scaled:center"),
+  #     scale = attr(scaling_params[[i]], "scaled:scale")
+  #   )
+  # })
 
   list(
     train = train_data,
@@ -115,23 +115,23 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
 
 
 
-  scaling_params <- lapply(train_data[scale_cols], function(col) scale(col, center = TRUE, scale = TRUE))
-  train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
-    scale(
-      train_data[[scale_cols[i]]],
-      center = attr(scaling_params[[i]], "scaled:center"),
-      scale = attr(scaling_params[[i]], "scaled:scale")
-    )
-  })
-
-  # Apply scaling to test data using training parameters
-  test_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
-    scale(
-      test_data[[scale_cols[i]]],
-      center = attr(scaling_params[[i]], "scaled:center"),
-      scale = attr(scaling_params[[i]], "scaled:scale")
-    )
-  })
+  # scaling_params <- lapply(train_data[scale_cols], function(col) scale(col, center = TRUE, scale = TRUE))
+  # train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+  #   scale(
+  #     train_data[[scale_cols[i]]],
+  #     center = attr(scaling_params[[i]], "scaled:center"),
+  #     scale = attr(scaling_params[[i]], "scaled:scale")
+  #   )
+  # })
+  #
+  # # Apply scaling to test data using training parameters
+  # test_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+  #   scale(
+  #     test_data[[scale_cols[i]]],
+  #     center = attr(scaling_params[[i]], "scaled:center"),
+  #     scale = attr(scaling_params[[i]], "scaled:scale")
+  #   )
+  # })
 
   # Return both datasets
   list(train = train_data, validation = test_data)
