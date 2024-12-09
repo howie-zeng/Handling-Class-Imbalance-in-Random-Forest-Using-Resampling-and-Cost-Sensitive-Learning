@@ -13,6 +13,9 @@ process_all_dataframes <- function(df_list) {
   for (name in names(df_list)) {
     df <- df_list[[name]]
 
+    zero_variance_cols <- sapply(dataset, var) == 0
+    df <- dataset[, !zero_variance_cols]
+
     stratified_sampling <- function(data, target_col, sample_size = 1000000) {
       if (nrow(data) > sample_size) {
         # Calculate the proportion of each class
