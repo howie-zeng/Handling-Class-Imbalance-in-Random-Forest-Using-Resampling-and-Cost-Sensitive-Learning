@@ -25,7 +25,7 @@
 #' iris$Species <- as.factor(iris$Species)
 #' iris_balanced <- apply_sampling(iris, "Species", "none")
 #' @export
-apply_sampling <- function(data, target_col, method = c("none", "oversample", "undersample", "smote")) {
+apply_sampling <- function(data, target_col='target', method = c("none", "oversample", "undersample", "smote")) {
   method <- match.arg(method)
 
   # Input validation

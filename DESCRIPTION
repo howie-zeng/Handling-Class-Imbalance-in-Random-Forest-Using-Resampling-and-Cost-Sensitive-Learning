@@ -18,18 +18,21 @@ RoxygenNote: 7.3.2
 Imports:
     randomForest (>= 4.6-14),
     caret,
-    ROSE,
     dplyr,
-    ggplot2,
-    DMwR2,
     smotefamily,
     roxygen2,
     ParBayesianOptimization,
     stringr,
-    parallel,
     rlang,
     knitr,
-    rmarkdown
+    rmarkdown,
+    recipes,
+    themis,
+    RANN,
+    doParallel,
+    foreach,
+    stats,
+    utils
 Suggests: 
     testthat (>= 3.0.0),
     knitr,

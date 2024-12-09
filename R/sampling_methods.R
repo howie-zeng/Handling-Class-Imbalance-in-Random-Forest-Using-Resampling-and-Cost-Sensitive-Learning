@@ -1,31 +1,27 @@
-#' Apply Sampling Method to Balance a Dataset
+#' Balance a Dataset Using Specified Sampling Methods
 #'
-#' Balances a dataset by applying one of the specified sampling methods:
-#' no sampling, oversampling, undersampling, or SMOTE (Synthetic Minority Oversampling Technique).
-#' These methods address class imbalance in datasets, making them suitable for
-#' classification tasks where the target class distribution is skewed.
+#' This function addresses class imbalance by applying a specified sampling method
+#' to a given dataset. It supports modern, recipe-based transformations through
+#' the **`themis`** package, which is part of the **tidymodels** ecosystem.
+#' Supported methods currently include no sampling, SMOTE (Synthetic Minority Oversampling
+#' Technique), Tomek Links, and ADASYN.
 #'
-#' @param data A data frame to balance. The dataset must include the target column.
-#' @param target_col A string specifying the name of the target column (dependent variable).
-#'     The target column should be categorical.
+#' @param data A `data.frame` containing the dataset to be balanced. Must include
+#'   the target column.
+#' @param target_col A string specifying the name of the target column (the dependent variable).
+#'   The target column should be a factor with two or more levels.
 #' @param method A string specifying the sampling method to use. Options include:
-#'     \itemize{
-#'       \item \code{"none"}: No sampling, returns the input dataset as is.
-#'       \item \code{"oversample"}: Oversampling using the \code{\link[ROSE]{ROSE}} method.
-#'       \item \code{"undersample"}: Undersampling using the \code{\link[ROSE]{ROSE}} method.
-#'       \item \code{"smote"}: Oversampling using the \code{\link[smotefamily]{SMOTE}} method.
-#'     }
-#' @return A data frame with balanced classes based on the specified method.
-#' @importFrom ROSE ROSE
-#' @importFrom smotefamily SMOTE
-#' @importFrom dplyr mutate group_by summarize filter
-#' @examples
-#' library(dplyr)
-#' data(iris)
-#' iris$Species <- as.factor(iris$Species)
-#' iris_balanced <- apply_sampling(iris, "Species", "none")
+#'   \describe{
+#'     \item{"none"}{No sampling, returns the input dataset as is.}
+#'     \item{"smote"}{Apply SMOTE oversampling via \code{\link[themis]{step_smote}}.}
+#'     \item{"tomek"}{Apply Tomek Links cleaning via \code{\link[themis]{step_tomek}}.}
+#'     \item{"adasyn"}{Apply ADASYN oversampling via \code{\link[themis]{step_adasyn}}.}
+#'   }
+#' @return A `data.frame` with balanced classes based on the specified method.
+#' @import recipes
+#' @import themis
 #' @export
-apply_sampling <- function(data, target_col, method = c("none", "oversample", "undersample", "smote")) {
+apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek", "adasyn")) {
   method <- match.arg(method)
 
   # Input validation
@@ -33,32 +29,35 @@ apply_sampling <- function(data, target_col, method = c("none", "oversample", "u
     stop("`data` must be a data frame.")
   }
   if (!target_col %in% colnames(data)) {
-    stop("`target_col` must be a valid column name in the data.")
+    stop("`target_col` must be a valid column name in `data`.")
   }
   if (!is.factor(data[[target_col]])) {
-    stop("`target_col` must be a factor.")
+    stop("`target_col` must be a factor with two or more levels.")
   }
 
-  # Apply the specified sampling method
+  # If no sampling is requested, return the data unchanged
   if (method == "none") {
     return(data)
   }
 
-  if (method == "oversample") {
-    # Apply ROSE for oversampling
-    oversampled_data <- ROSE(as.formula(paste(target_col, "~ .")), data = data, seed = 2024)$data
-    return(oversampled_data)
+  # Construct a recipe for data balancing
+  rec <- recipes::recipe(as.formula(paste(target_col, "~ .")), data = data)
+
+  # Add the appropriate step based on the selected method
+  rec <- switch(
+    method,
+    smote = rec %>% themis::step_smote(all_predictors(), under_ratio = 1),
+    tomek = rec %>% themis::step_tomek(all_predictors(), all_outcomes()),
+    adasyn = rec %>% themis::step_adasyn(all_predictors(), under_ratio = 1)
+  )
+
+  # Prepare and bake the recipe to get the balanced dataset
+  balanced_data <- recipes::prep(rec, training = data) %>% recipes::bake(new_data = NULL)
+
+  # Ensure the target column is named consistently (should already be, but just in case)
+  if (!target_col %in% colnames(balanced_data)) {
+    colnames(balanced_data)[ncol(balanced_data)] <- target_col
   }
 
-  if (method == "undersample") {
-    # Apply ROSE for undersampling
-    undersampled_data <- ROSE(as.formula(paste(target_col, "~ .")), data = data, seed = 2024, N = nrow(data))$data
-    return(undersampled_data)
-  }
-
-  if (method == "smote") {
-    # Apply SMOTE for synthetic oversampling
-    smote_data <- SMOTE(X = data, target = target_col)
-    return(smote_data)
-  }
+  return(balanced_data)
 }

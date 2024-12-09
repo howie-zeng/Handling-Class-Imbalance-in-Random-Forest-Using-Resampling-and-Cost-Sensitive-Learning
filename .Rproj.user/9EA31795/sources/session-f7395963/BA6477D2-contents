@@ -75,17 +75,16 @@ install_and_load("ImbalanceRF", "howie-zeng/MyPackage", install=TRUE)
 data <- load_data()
 
 
-
-# devtools::document()
-# devtools::check()
-# devtools::clean_dll()
-# devtools::build()
-
+df_list <- process_all_dataframes(copy(data))
+explore_datasets(df_list)
 ```
 
 ```{r}
-df_list <- process_all_dataframes(copy(data))
-explore_datasets(df_list)
+df_split_results <- split_data(copy(df_list), 'target')
+
+
+
+
 ```
 
 ```{r}
@@ -118,215 +117,8 @@ explore_datasets(df_list)
 # }
 # 
 # 
-split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree = 20, scale_cols = NULL, seed = 2024) {
-  # Set seed for reproducibility
-  set.seed(seed)
 
-  # Step 1: Impute missing values
-  imputed_data <- missForest(xmis = data, maxiter = maxiter, ntree = ntree)$ximp
-
-  # Step 2: Convert the target column to factor if not already
-  imputed_data[[target_col]] <- as.factor(imputed_data[[target_col]])
-
-  # Step 3: Automatically detect numerical columns to scale if scale_cols is NULL
-  if (is.null(scale_cols)) {
-    scale_cols <- names(imputed_data)[sapply(imputed_data, is.numeric) & names(imputed_data) != target_col]
-  }
-
-  # Step 4: Apply Robust Scaling to specified columns
-  robust_scaler <- function(x) {
-    (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
-  }
-  imputed_data[scale_cols] <- lapply(imputed_data[scale_cols], robust_scaler)
-
-  # Step 5: Stratified split using caret's createDataPartition
-  trainIndex <- createDataPartition(imputed_data[[target_col]], p = train_ratio, list = FALSE)
-
-  # Step 6: Split into training and validation sets
-  train_data <- imputed_data[trainIndex, ]
-  validation_data <- imputed_data[-trainIndex, ]
-
-  # Return both datasets
-  list(train = train_data, validation = validation_data)
-}
-
-
-# plot_categorical_distributions(df_hr, "HR Dataset")
-
-# for (name in names(df_list)) {
-#   plot_all_distributions(df_list[[name]], name)
-# }
-
-dfsplit_results <- split_data(df_list, 'target')
-
-```
-
-
-
-
-# Preprocessing 
-
-## HR Dataset
-
-```{r}
-df_hr <-
-  df_hr %>% rename(relevant_experience = relevent_experience) %>%
-  mutate(
-    relevant_experience = str_replace(
-      relevant_experience,
-      pattern = "relevent",
-      replacement = "relevant"
-    )
-  ) %>%
-  mutate_if(is.character, as.factor) %>% mutate(target = as.factor(target)) %>% mutate(city_development_index = as.factor(city_development_index))
-
-df_hr <- df_hr %>%
-  select(-enrollee_id, -city, -gender) %>%
-  mutate(city_development_index = as.numeric(city_development_index))
-```
-
-```{r}
-split_result <- split_train(data = df_hr, target_col = "target", train_ratio = 0.75)
-
-train_data <- split_result$train
-validation_data <- split_result$validation
-```
-
-```{r}
-rf_model <- randomForest(
-  target ~ .,
-  data = train_data,
-  ntree = 200,
-  mtry = 3,
-  importance = TRUE
-)
-print(rf_model)
-varImpPlot(rf_model)
-```
-```{r}
-predicted_validation <- predict(rf_model, validation_data)
-confusionMatrix(predicted_validation, validation_data$target)
-
-```
-
-## Bank Fraud Dataset
-```{r}
-split_train_test_by_month <- function(data, target_col, month_col, train_months, test_months, seed = 2024) {
-  # Set seed for reproducibility
-  set.seed(seed)
-  
-  # Step 1: Split data by month
-  train_data <- data %>% filter(!!sym(month_col) %in% train_months)
-  test_data <- data %>% filter(!!sym(month_col) %in% test_months)
-  
-  # Step 2: Separate features and target
-  X_train <- train_data %>% select(-all_of(target_col))
-  y_train <- train_data[[target_col]]
-  
-  X_test <- test_data %>% select(-all_of(target_col))
-  y_test <- test_data[[target_col]]
-  
-  # Step 3: Identify numeric columns for robust scaling
-  num_cols <- names(X_train)[sapply(X_train, is.numeric)]
-  
-  robust_scaler <- function(x) {
-    (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
-  }
-  
-  # Step 4: Apply robust scaling to numeric columns
-  X_train[num_cols] <- lapply(X_train[num_cols], robust_scaler)
-  X_test[num_cols] <- lapply(X_test[num_cols], robust_scaler)
-  
-  # Return scaled and split data
-  list(
-    X_train = X_train,
-    y_train = y_train,
-    X_test = X_test,
-    y_test = y_test
-  )
-}
-
-split_result <- split_train_test_by_month(
-  data = df_bank_fraud,
-  target_col = "target",
-  month_col = "month",
-  train_months = 0:5,
-  test_months = 6:7
-)
-
-X_train <- split_result$X_train
-y_train <- split_result$y_train
-X_test <- split_result$X_test
-y_test <- split_result$y_test
 
 
 ```
 
-
-
-
-## Credit Card Fraud Dataset
-```{r}
-
-split_result <- split_train(data = df_credit_card_fraud, target_col = "target", train_ratio = 0.75)
-
-```
-
-## Credit Default
-```{r}
-
-
-colnames(df_credit_card_default) <- c("ID", "LIMIT_BAL", "SEX", "EDUCATION", "MARRIAGE", "AGE", 
-                  "PAY_SEPT", "PAY_AUG", "PAY_JUL", "PAY_JUN", "PAY_MAY", "PAY_APR", 
-                  "BILL_AMT_SEPT", "BILL_AMT_AUG", "BILL_AMT_JUL", "BILL_AMT_JUN", 
-                  "BILL_AMT_MAY", "BILL_AMT_APR", "PAY_AMT_SEPT", "PAY_AMT_AUG", 
-                  "PAY_AMT_JUL", "PAY_AMT_JUN", "PAY_AMT_MAY", "PAY_AMT_APR", "target")
-df_credit_card_default <- df_credit_card_default %>%
-  mutate(
-    EDUCATION = ifelse(EDUCATION %in% c(0, 5, 6), 4, EDUCATION),
-    MARRIAGE = ifelse(MARRIAGE == 0, 3, MARRIAGE)
-  )
-
-# Feature Engineering: Create new features
-df_credit_card_default <- df_credit_card_default %>%
-  mutate(
-    Payment_Sum = PAY_SEPT + PAY_AUG + PAY_JUL + PAY_JUN + PAY_MAY + PAY_APR,
-    Dues = (BILL_AMT_APR + BILL_AMT_MAY + BILL_AMT_JUN + BILL_AMT_JUL + BILL_AMT_SEPT) - 
-            (PAY_AMT_APR + PAY_AMT_MAY + PAY_AMT_JUN + PAY_AMT_JUL + PAY_AMT_AUG + PAY_AMT_SEPT)
-  )
-
-# Convert categorical variables to factors
-df_credit_card_default$SEX <- factor(df_credit_card_default$SEX, levels = c(1, 2), labels = c("MALE", "FEMALE"))
-df_credit_card_default$EDUCATION <- factor(df_credit_card_default$EDUCATION, labels = c("Graduate School", "University", "High School", "Others"))
-df_credit_card_default$MARRIAGE <- factor(df_credit_card_default$MARRIAGE, labels = c("Married", "Single", "Others"))
-df_credit_card_default$target <- factor(df_credit_card_default$target)
-
-
-split_train(data = df_credit_card_default, target_col = "target", train_ratio = 0.75)
-
-```
-
-## Diabetes
-```{r}
-# Specify the columns to drop
-columns_to_drop <- c("Fruits", "Veggies", "Sex", "CholCheck", "AnyHealthcare")
-
-# Drop the specified columns
-df_diabetes <- df_diabetes %>%
-  select(-all_of(columns_to_drop))
-```
-
-##Interest in insurance detection
-https://www.kaggle.com/datasets/arashnic/imbalanced-data-practice
-```{r}
-split_train(data = df_insurance, target_col = "target", train_ratio = 0.75)
-
-```
-
-
-## Credit Card Approval
-```{r}
-
-split_train(data = df_credit_card_approval, target_col = "target", train_ratio = 0.75)
-
-```

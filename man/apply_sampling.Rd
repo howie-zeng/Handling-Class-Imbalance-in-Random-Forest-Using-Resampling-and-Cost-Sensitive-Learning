@@ -2,40 +2,36 @@
 % Please edit documentation in R/sampling_methods.R
 \name{apply_sampling}
 \alias{apply_sampling}
-\title{Apply Sampling Method to Balance a Dataset}
+\title{Balance a Dataset Using Specified Sampling Methods}
 \usage{
 apply_sampling(
   data,
   target_col,
-  method = c("none", "oversample", "undersample", "smote")
+  method = c("none", "smote", "tomek", "adasyn")
 )
 }
 \arguments{
-\item{data}{A data frame to balance. The dataset must include the target column.}
+\item{data}{A \code{data.frame} containing the dataset to be balanced. Must include
+the target column.}
 
-\item{target_col}{A string specifying the name of the target column (dependent variable).
-The target column should be categorical.}
+\item{target_col}{A string specifying the name of the target column (the dependent variable).
+The target column should be a factor with two or more levels.}
 
 \item{method}{A string specifying the sampling method to use. Options include:
-\itemize{
-\item \code{"none"}: No sampling, returns the input dataset as is.
-\item \code{"oversample"}: Oversampling using the \code{\link[ROSE]{ROSE}} method.
-\item \code{"undersample"}: Undersampling using the \code{\link[ROSE]{ROSE}} method.
-\item \code{"smote"}: Oversampling using the \code{\link[smotefamily]{SMOTE}} method.
+\describe{
+\item{"none"}{No sampling, returns the input dataset as is.}
+\item{"smote"}{Apply SMOTE oversampling via \code{\link[themis]{step_smote}}.}
+\item{"tomek"}{Apply Tomek Links cleaning via \code{\link[themis]{step_tomek}}.}
+\item{"adasyn"}{Apply ADASYN oversampling via \code{\link[themis]{step_adasyn}}.}
 }}
 }
 \value{
-A data frame with balanced classes based on the specified method.
+A \code{data.frame} with balanced classes based on the specified method.
 }
 \description{
-Balances a dataset by applying one of the specified sampling methods:
-no sampling, oversampling, undersampling, or SMOTE (Synthetic Minority Oversampling Technique).
-These methods address class imbalance in datasets, making them suitable for
-classification tasks where the target class distribution is skewed.
-}
-\examples{
-library(dplyr)
-data(iris)
-iris$Species <- as.factor(iris$Species)
-iris_balanced <- apply_sampling(iris, "Species", "none")
+This function addresses class imbalance by applying a specified sampling method
+to a given dataset. It supports modern, recipe-based transformations through
+the \strong{\code{themis}} package, which is part of the \strong{tidymodels} ecosystem.
+Supported methods currently include no sampling, SMOTE (Synthetic Minority Oversampling
+Technique), Tomek Links, and ADASYN.
 }
