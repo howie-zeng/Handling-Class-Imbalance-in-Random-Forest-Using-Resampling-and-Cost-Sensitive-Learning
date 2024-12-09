@@ -35,6 +35,7 @@ devtools::check()
 devtools::clean_dll()
 devtools::build()
 
+remove.packages("ImbalanceRF")
 
 ```{r setup, include=FALSE}
 library(dplyr)
@@ -85,9 +86,6 @@ data <- load_data()
 ```{r}
 df_list <- process_all_dataframes(copy(data))
 explore_datasets(df_list)
-
-
-df_list$'Insurance Dataset'
 ```
 
 ```{r}
@@ -159,7 +157,7 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
 #   plot_all_distributions(df_list[[name]], name)
 # }
 
-split_data(df_list, 'target')
+dfsplit_results <- split_data(df_list, 'target')
 
 ```
 
