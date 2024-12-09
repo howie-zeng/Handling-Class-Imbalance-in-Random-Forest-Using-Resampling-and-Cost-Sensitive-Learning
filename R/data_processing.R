@@ -5,6 +5,7 @@
 #'
 #' @param df_list A named list of dataframes to process.
 #' @return A named list of processed dataframes.
+#' @importFrom dplyr %>% bind_rows mutate select
 
 process_all_dataframes <- function(df_list) {
   processed_list <- list()
@@ -29,25 +30,20 @@ process_all_dataframes <- function(df_list) {
         select(-enrollee_id, -city, -gender)
     } else if (name == "Bank Fraud Dataset") {
       # Bank Fraud Dataset Processing
-      df <- df %>%
-        rename(target = fraud_bool)
+
     } else if (name == "Credit Card Fraud Dataset") {
       # Credit Card Fraud Dataset Processing
-      df <- df %>%
-        rename(target = Class)
+
     } else if (name == "Diabetes Dataset") {
       # Diabetes Dataset Processing
       df <- df %>%
-        rename(target = Diabetes_binary) %>%
         select(-Fruits, -Veggies, -Sex, -CholCheck, -AnyHealthcare)
     } else if (name == "Insurance Dataset") {
       # Insurance Dataset Processing
-      df <- df %>%
-        rename(target = Response)
+
     } else if (name == "Credit Card Default Dataset") {
       # Credit Card Default Dataset Processing
       df <- df %>%
-        rename(target = default.payment.next.month) %>%
         mutate(
           EDUCATION = ifelse(EDUCATION %in% c(0, 5, 6), 4, EDUCATION),
           MARRIAGE = ifelse(MARRIAGE == 0, 3, MARRIAGE)
@@ -63,8 +59,7 @@ process_all_dataframes <- function(df_list) {
         )
     } else if (name == "Credit Card Approval Dataset") {
       # Credit Card Approval Dataset Processing
-      df_credit_data <- read.csv("data/credit_record.csv", stringsAsFactors = FALSE)
-      df <- process_credit_card_data(df_credit_data, df)
+
     }
 
     # Add the processed dataframe to the list

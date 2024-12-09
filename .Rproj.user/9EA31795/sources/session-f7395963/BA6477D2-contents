@@ -45,6 +45,7 @@ library(caret)
 library(robustbase)
 library(smotefamily)
 library(parallel)
+library(data.table)
 seed <- 2024
 set.seed(seed)
 
@@ -65,10 +66,85 @@ install_and_load <- function(package_name, github_repo, install=FALSE) {
 install_and_load("ImbalanceRF", "howie-zeng/MyPackage", install=TRUE)
 
 data <- load_data()
+
+
+
+# devtools::document()
+# devtools::check()
+# devtools::build()
+
 ```
 
 ```{r}
-df_list <- process_all_dataframes(data)
+process_all_dataframess <- function(df_list) {
+  processed_list <- list()
+
+  for (name in names(df_list)) {
+    df <- df_list[[name]]
+
+    if (name == "HR Dataset") {
+      # HR Dataset Processing
+      df <- df %>%
+        rename(relevant_experience = relevent_experience) %>%
+        mutate(
+          relevant_experience = str_replace(
+            relevant_experience,
+            pattern = "relevent",
+            replacement = "relevant"
+          )
+        ) %>%
+        mutate_if(is.character, as.factor) %>%
+        mutate(target = as.factor(target)) %>%
+        mutate(city_development_index = as.numeric(city_development_index)) %>%
+        select(-enrollee_id, -city, -gender)
+    } else if (name == "Bank Fraud Dataset") {
+      # Bank Fraud Dataset Processing
+      df <- df %>%
+        rename(target = fraud_bool)
+    } else if (name == "Credit Card Fraud Dataset") {
+      # Credit Card Fraud Dataset Processing
+      df <- df %>%
+        rename(target = Class)
+    } else if (name == "Diabetes Dataset") {
+      # Diabetes Dataset Processing
+      df <- df %>%
+        rename(target = Diabetes_binary) %>%
+        select(-Fruits, -Veggies, -Sex, -CholCheck, -AnyHealthcare)
+    } else if (name == "Insurance Dataset") {
+      # Insurance Dataset Processing
+      df <- df %>%
+        rename(target = Response)
+    } else if (name == "Credit Card Default Dataset") {
+      # Credit Card Default Dataset Processing
+      df <- df %>%
+        rename(target = default.payment.next.month) %>%
+        mutate(
+          EDUCATION = ifelse(EDUCATION %in% c(0, 5, 6), 4, EDUCATION),
+          MARRIAGE = ifelse(MARRIAGE == 0, 3, MARRIAGE)
+        ) %>%
+        mutate(
+          Payment_Sum = PAY_0 + PAY_2 + PAY_3 + PAY_4 + PAY_5 + PAY_6,
+          Dues = BILL_AMT1 + BILL_AMT2 + BILL_AMT3 - (PAY_AMT1 + PAY_AMT2 + PAY_AMT3)
+        ) %>%
+        mutate(
+          SEX = factor(SEX, levels = c(1, 2), labels = c("MALE", "FEMALE")),
+          EDUCATION = factor(EDUCATION, labels = c("Graduate School", "University", "High School", "Others")),
+          MARRIAGE = factor(MARRIAGE, labels = c("Married", "Single", "Others"))
+        )
+    } else if (name == "Credit Card Approval Dataset") {
+      # Credit Card Approval Dataset Processing
+      df_credit_data <- read.csv("data/credit_record.csv", stringsAsFactors = FALSE)
+      df <- process_credit_card_data(df_credit_data, df)
+    }
+
+    # Add the processed dataframe to the list
+    processed_list[[name]] <- df
+  }
+
+  return(processed_list)
+}
+
+df_list <- process_all_dataframess(copy(data))
 explore_datasets(df_list)
 ```
 
