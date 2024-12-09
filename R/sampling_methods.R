@@ -18,7 +18,7 @@
 #' @return A `data.frame` with balanced classes based on the specified method.
 #' @import smotefamily
 #' @export
-apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek", "adasyn")) {
+apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek", "adasyn", "smotemek")) {
   method <- match.arg(method)
 
   # Input validation
@@ -39,7 +39,7 @@ apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek"
   # If no sampling is requested, return the data unchanged
   if (method == "none") {
     return(data)
-  } else if (method %in% c("tomek", "adasyn")) {
+  } else if (method %in% c("tomek", "adasyn", "smotemek")) {
     predictors <- setdiff(names(data), target_col)
 
     # Convert non-numeric predictors to numeric
@@ -58,8 +58,13 @@ apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek"
     method,
     smote = themis::smotenc(df=data, var=target_col),
     tomek = themis::tomek(df=data, var=target_col),
-    adasyn = themis::adasyn(df=data, var=target_col)
+    adasyn = themis::adasyn(df=data, var=target_col),
+    smotemek = SMOTETomek(x =data %>% select(-target), data$target)
   )
+
+  if (method == "smotemek") {
+    colnames(result)[colnames(result) == 'y'] <- 'target'
+  }
 
   for (col in names(original_factors[original_factors])) {
     result[[col]] <- factor(result[[col]])
