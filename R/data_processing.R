@@ -13,7 +13,7 @@ process_all_dataframes <- function(df_list) {
   for (name in names(df_list)) {
     df <- df_list[[name]]
 
-    stratified_sampling <- function(data, target_col, sample_size = 500000) {
+    stratified_sampling <- function(data, target_col, sample_size = 1000000) {
       if (nrow(data) > sample_size) {
         # Calculate the proportion of each class
         proportions <- data %>%

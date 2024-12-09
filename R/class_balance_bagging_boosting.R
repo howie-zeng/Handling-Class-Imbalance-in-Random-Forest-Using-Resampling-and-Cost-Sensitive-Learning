@@ -223,7 +223,6 @@ bboost.data.frame <-
       }
 
       if (type == "SMOTEBoost") {
-        source("SMOTE.R")
         perOver <- ((numMaj - numMin) / numMin) * 100
         dataSmoteSample <- SMOTE(form, data, perOver)
         numNew <- nrow(dataSmoteSample)
@@ -374,7 +373,6 @@ BalanceCascade.data.frame <-
     #        y: A vector of the response variable from the training set
     #     iter: Number of iterations to train base classifiers
 
-    source("BalanceBoost.R")
     funcCall <- match.call(expand.dots = FALSE)
     data <- data.frame(x, y)
     tgt <- length(data)
@@ -481,7 +479,6 @@ EasyEnsemble.data.frame <-
     H <- list()
 
     fitter <- function(tgt, data, indexMaj, numMin, indexMin) {
-      source("BalanceBoost.R")
       indexMajCurrent <- sample(indexMaj, numMin)
       dataCurrent <- data[c(indexMin, indexMajCurrent),]
       out <- bboost.data.frame(dataCurrent[, -tgt], dataCurrent[, tgt], type = "AdaBoost")
@@ -555,7 +552,6 @@ SMOTETomek <-
     #   perOver : Number of new instances generated for each minority instance (in SMOTE)
     #   k       : Number of nearest neighbors in SMOTE
 
-    source("SMOTE.R")
     newData <- SMOTE(x, y, percOver, k)
     tgt <- length(newData)
     indexTL <- TomekLink(tgt, newData)
@@ -610,7 +606,7 @@ SMOTE <-
     majClass <- names(which.max(classTable))
     indexMaj <- which(data[, tgt] == majClass)
 
-    source("code/Data level/SmoteExs.R")
+    source("SmoteExs.R")
     if (percOver < 100) {
       indexMinSelect <- sample(seq_len(numMin), round(numMin * percOver / 100))
       dataMinSelect  <- data[indexMin[indexMinSelect], ]
