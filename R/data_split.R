@@ -53,6 +53,7 @@ split_data <- function(df_list, target_col, train_ratio = 0.75, maxiter = 2, ntr
 
 split_train_test_by_month <- function(data, target_col, month_col, train_months, test_months, seed = 2024) {
   set.seed(seed)
+  imputed_data <- missForest(xmis = data, maxiter = maxiter, ntree = ntree)$ximp
 
   train_data <- data %>% filter(!!sym(month_col) %in% train_months)
   test_data <- data %>% filter(!!sym(month_col) %in% test_months)
@@ -69,8 +70,13 @@ split_train_test_by_month <- function(data, target_col, month_col, train_months,
     (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
   }
 
+
+
   X_train[num_cols] <- lapply(X_train[num_cols], robust_scaler)
   X_test[num_cols] <- lapply(X_test[num_cols], robust_scaler)
+
+  train <- cbind(X_train, !!sym(target_col) := y_train)
+  test <- cbind(X_test, !!sym(target_col) := y_test)
 
   list(
     X_train = X_train,
