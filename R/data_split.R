@@ -107,6 +107,14 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
   # }
   # imputed_data[scale_cols] <- lapply(imputed_data[scale_cols], robust_scaler)
   # Apply scaling to train data
+  # Step 6: Split into training and validation sets
+  # Step 5: Stratified split using caret's createDataPartition
+  trainIndex <- createDataPartition(imputed_data[[target_col]], p = train_ratio, list = FALSE)
+  train_data <- imputed_data[trainIndex, ]
+  test_data <- imputed_data[-trainIndex, ]
+
+
+
   scaling_params <- lapply(train_data[scale_cols], function(col) scale(col, center = TRUE, scale = TRUE))
   train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
     scale(
@@ -125,14 +133,11 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
     )
   })
 
-  # Step 5: Stratified split using caret's createDataPartition
-  trainIndex <- createDataPartition(imputed_data[[target_col]], p = train_ratio, list = FALSE)
 
-  # Step 6: Split into training and validation sets
-  train_data <- imputed_data[trainIndex, ]
-  validation_data <- imputed_data[-trainIndex, ]
+
+
 
   # Return both datasets
-  list(train = train_data, validation = validation_data)
+  list(train = train_data, validation = test_data)
 }
 
