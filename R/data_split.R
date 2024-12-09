@@ -61,8 +61,6 @@ split_train_test_by_month <- function(data, target_col, month_col, train_months,
 
   scale_cols <- names(imputed_data)[sapply(imputed_data, is.numeric) & names(imputed_data) != target_col]
 
-  num_cols <- names(X_train)[sapply(X_train, is.numeric)]
-
   robust_scaler <- function(x) {
     (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
   }
