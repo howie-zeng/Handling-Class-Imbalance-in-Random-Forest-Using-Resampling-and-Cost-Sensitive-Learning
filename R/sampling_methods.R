@@ -39,7 +39,7 @@ apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek"
   # If no sampling is requested, return the data unchanged
   if (method == "none") {
     return(data)
-  } else if (method %in% c("SMOTE", "tomek", "adasyn", "smotemek")) {
+  } else if (method %in% c("tomek", "adasyn", "smotemek")) {
     predictors <- setdiff(names(data), target_col)
 
     # Convert non-numeric predictors to numeric
@@ -56,7 +56,7 @@ apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek"
   # Add the appropriate step based on the selected method
   result <- switch(
     method,
-    smote = themis::smote(df=data, var=target_col),
+    smote = themis::smotenc(df=data, var=target_col),
     tomek = themis::tomek(df=data, var=target_col),
     adasyn = themis::adasyn(df=data, var=target_col),
     smotemek = SMOTETomek(x =data %>% select(-target), data$target)

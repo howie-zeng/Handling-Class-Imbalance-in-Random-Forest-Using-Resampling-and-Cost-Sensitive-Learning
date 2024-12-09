@@ -51,7 +51,7 @@ split_data <- function(df_list, target_col, train_ratio = 0.75, maxiter = 2, ntr
 split_train_test_by_month <- function(data, target_col, month_col, train_months, test_months, seed = 2024) {
   set.seed(seed)
 
-  imputed_data <- missForest(xmis = data, maxiter = 2, ntree = 20)$ximp
+  imputed_data <- missForest(xmis = data, maxiter = 2, ntree = 50)$ximp
 
   train_data <- imputed_data %>% filter(!!sym(month_col) %in% train_months)
   test_data <- imputed_data %>% filter(!!sym(month_col) %in% test_months)
@@ -87,7 +87,7 @@ split_train_test_by_month <- function(data, target_col, month_col, train_months,
   )
 }
 
-split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree = 20, scale_cols = NULL, seed = 2024) {
+split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree = 50, scale_cols = NULL, seed = 2024) {
   set.seed(seed)
 
   # Step 1: Impute missing values
@@ -132,10 +132,6 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
       scale = attr(scaling_params[[i]], "scaled:scale")
     )
   })
-
-
-
-
 
   # Return both datasets
   list(train = train_data, validation = test_data)
