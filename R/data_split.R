@@ -58,13 +58,28 @@ split_train_test_by_month <- function(data, target_col, month_col, train_months,
 
   scale_cols <- names(imputed_data)[sapply(imputed_data, is.numeric) & names(imputed_data) != target_col]
 
-  robust_scaler <- function(x) {
-    (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
-  }
+  # robust_scaler <- function(x) {
+  #   (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
+  # }
 
+  scaling_params <- lapply(train_data[scale_cols], function(col) scale(col, center = TRUE, scale = TRUE))
+  # Apply scaling to train data
+  train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+    scale(
+      train_data[[scale_cols[i]]],
+      center = attr(scaling_params[[i]], "scaled:center"),
+      scale = attr(scaling_params[[i]], "scaled:scale")
+    )
+  })
 
-  train_data[scale_cols] <- lapply(train_data[scale_cols], robust_scaler)
-  test_data[scale_cols] <- lapply(test_data[scale_cols], robust_scaler)
+  # Apply scaling to test data using training parameters
+  test_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+    scale(
+      test_data[[scale_cols[i]]],
+      center = attr(scaling_params[[i]], "scaled:center"),
+      scale = attr(scaling_params[[i]], "scaled:scale")
+    )
+  })
 
   list(
     train = train_data,
@@ -87,10 +102,28 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
   }
 
   # Step 4: Apply Robust Scaling to specified columns
-  robust_scaler <- function(x) {
-    (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
-  }
-  imputed_data[scale_cols] <- lapply(imputed_data[scale_cols], robust_scaler)
+  # robust_scaler <- function(x) {
+  #   (x - median(x, na.rm = TRUE)) / IQR(x, na.rm = TRUE)
+  # }
+  # imputed_data[scale_cols] <- lapply(imputed_data[scale_cols], robust_scaler)
+  # Apply scaling to train data
+  scaling_params <- lapply(train_data[scale_cols], function(col) scale(col, center = TRUE, scale = TRUE))
+  train_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+    scale(
+      train_data[[scale_cols[i]]],
+      center = attr(scaling_params[[i]], "scaled:center"),
+      scale = attr(scaling_params[[i]], "scaled:scale")
+    )
+  })
+
+  # Apply scaling to test data using training parameters
+  test_data[scale_cols] <- lapply(seq_along(scale_cols), function(i) {
+    scale(
+      test_data[[scale_cols[i]]],
+      center = attr(scaling_params[[i]], "scaled:center"),
+      scale = attr(scaling_params[[i]], "scaled:scale")
+    )
+  })
 
   # Step 5: Stratified split using caret's createDataPartition
   trainIndex <- createDataPartition(imputed_data[[target_col]], p = train_ratio, list = FALSE)

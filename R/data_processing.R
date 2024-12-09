@@ -13,6 +13,26 @@ process_all_dataframes <- function(df_list) {
   for (name in names(df_list)) {
     df <- df_list[[name]]
 
+    stratified_sampling <- function(data, target_col, sample_size = 500000) {
+      if (nrow(data) > sample_size) {
+        # Calculate the proportion of each class
+        proportions <- data %>%
+          count(!!sym(target_col)) %>%
+          mutate(prop = n / sum(n))
+
+        # Stratified sampling
+        sampled_data <- data %>%
+          group_by(!!sym(target_col)) %>%
+          sample_n(size = round(proportions$prop * sample_size), replace = FALSE) %>%
+          ungroup()
+
+        return(sampled_data)
+      } else {
+        # If data size is less than or equal to sample_size, return the original data
+        return(data)
+      }
+    }
+
     if (name == "HR Dataset") {
       # HR Dataset Processing
       df <- df %>%
@@ -71,4 +91,25 @@ process_all_dataframes <- function(df_list) {
 
   return(processed_list)
 }
+
+stratified_sampling <- function(data, target_col, sample_size = 500000) {
+  if (nrow(data) > sample_size) {
+    # Calculate the proportion of each class
+    proportions <- data %>%
+      count(!!sym(target_col)) %>%
+      mutate(prop = n / sum(n))
+
+    # Stratified sampling
+    sampled_data <- data %>%
+      group_by(!!sym(target_col)) %>%
+      sample_n(size = round(proportions$prop * sample_size), replace = FALSE) %>%
+      ungroup()
+
+    return(sampled_data)
+  } else {
+    # If data size is less than or equal to sample_size, return the original data
+    return(data)
+  }
+}
+
 

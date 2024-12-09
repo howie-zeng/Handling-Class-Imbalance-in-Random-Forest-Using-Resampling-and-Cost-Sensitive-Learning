@@ -67,3 +67,4 @@ apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek"
   # Prepare and bake the recipe to get the balanced dataset
   return(result)
 }
+
