@@ -226,7 +226,6 @@ bboost.data.frame <-
       }
 
       if (type == "SMOTEBoost") {
-        source("code/Data level/SMOTE.R")
         perOver  <- ((numMaj - numMin)/numMin)*100
         dataSmoteSample  <- SMOTE(form, data, perOver)
         numNew <- dim(dataSmoteSample)[1]
