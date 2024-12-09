@@ -337,39 +337,38 @@ predict.bboost<-
   }
 
 treeBoost <- list(
-  treeBoost <- list(
-    fit = function(form, data)
-    {
-      library(rpart)
-      out<-rpart(form,data)
-      return(out)
-    },
+  fit = function(form, data)
+  {
+    library(rpart)
+    out<-rpart(form,data)
+    return(out)
+  },
 
-    pred = function(object, data, type="class")
-    {
-      out <- predict(object, data,  type=type)
-    },
+  pred = function(object, data, type="class")
+  {
+    out <- predict(object, data,  type=type)
+  },
 
-    aggregate = function(x, weight, classLabels, type = "class")
+  aggregate = function(x, weight, classLabels, type = "class")
+  {
+    if (!type %in% c("class", "probability"))
+      stop("wrong setting with type")
+    numClass   <- length(classLabels)
+    numIns     <- dim(x)[1]
+    iter       <- dim(x)[2]
+    classfinal <- matrix(0, ncol = numClass, nrow = numIns)
+    colnames(classfinal) <- classLabels
+    for (i in 1:numClass){
+      classfinal[,i] <- matrix(as.numeric(x == classLabels[i]), nrow = numIns)%*%weight
+    }
+    if(type == "class")
     {
-      if (!type %in% c("class", "probability"))
-        stop("wrong setting with type")
-      numClass   <- length(classLabels)
-      numIns     <- dim(x)[1]
-      iter       <- dim(x)[2]
-      classfinal <- matrix(0, ncol = numClass, nrow = numIns)
-      colnames(classfinal) <- classLabels
-      for (i in 1:numClass){
-        classfinal[,i] <- matrix(as.numeric(x == classLabels[i]), nrow = numIns)%*%weight
-      }
-      if(type == "class")
-      {
-        out <- factor(classLabels[apply(classfinal, 1, which.max)], levels = classLabels )
-      } else {
-        out <-  classfinal/rowSums(classfinal)
-      }
-      out
-    })})
+      out <- factor(classLabels[apply(classfinal, 1, which.max)], levels = classLabels )
+    } else {
+      out <-  classfinal/rowSums(classfinal)
+    }
+    out
+  })
 
 #' @export
 BalanceCascade <-
