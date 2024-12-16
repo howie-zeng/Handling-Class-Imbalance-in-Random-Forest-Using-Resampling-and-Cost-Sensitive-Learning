@@ -563,7 +563,8 @@ SMOTETomek <-
     #   k       : Number of nearest neighbors in SMOTE
 
     newData <- SMOTE(x, y, percOver, k)
-    indexTL <- TomekLink('target', newData)
+    tgt <- length(newData)
+    indexTL <- TomekLink(tgt, newData)
     newDataRemoved <- newData[!indexTL, ]
     return(newDataRemoved)
   }

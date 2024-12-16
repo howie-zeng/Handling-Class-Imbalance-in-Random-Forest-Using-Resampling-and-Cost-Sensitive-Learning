@@ -59,7 +59,7 @@ apply_sampling <- function(data, target_col, method = c("none", "smote", "tomek"
     smote = themis::smotenc(df=data, var=target_col),
     tomek = themis::tomek(df=data, var=target_col),
     adasyn = themis::adasyn(df=data, var=target_col),
-    smotemek = SMOTETomek(x =data %>% select(-target), data$target)
+    smotemek = SMOTETomek(x = data %>% select(-target), data$target)
   )
 
   if (method == "smotemek") {
