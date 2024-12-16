@@ -7,7 +7,7 @@
 apply_sampling(
   data,
   target_col,
-  method = c("none", "smote", "tomek", "adasyn")
+  method = c("none", "smote", "tomek", "adasyn", "smotemek")
 )
 }
 \arguments{
@@ -15,14 +15,14 @@ apply_sampling(
 the target column.}
 
 \item{target_col}{A string specifying the name of the target column (the dependent variable).
-The target column should be a factor with two or more levels.}
+The target column should be a factor with two levels.}
 
 \item{method}{A string specifying the sampling method to use. Options include:
 \describe{
 \item{"none"}{No sampling, returns the input dataset as is.}
-\item{"smote"}{Apply SMOTE oversampling via \code{\link[themis]{step_smote}}.}
-\item{"tomek"}{Apply Tomek Links cleaning via \code{\link[themis]{step_tomek}}.}
-\item{"adasyn"}{Apply ADASYN oversampling via \code{\link[themis]{step_adasyn}}.}
+\item{"smote"}{Apply SMOTE oversampling via \code{\link[smotefamily]{SMOTE}}.}
+\item{"tomek"}{Apply Tomek Links cleaning via \code{\link[smotefamily]{TomekLinkRemoval}}.}
+\item{"adasyn"}{Apply ADASYN oversampling via \code{\link[smotefamily]{ADAS}}.}
 }}
 }
 \value{
@@ -30,8 +30,6 @@ A \code{data.frame} with balanced classes based on the specified method.
 }
 \description{
 This function addresses class imbalance by applying a specified sampling method
-to a given dataset. It supports modern, recipe-based transformations through
-the \strong{\code{themis}} package, which is part of the \strong{tidymodels} ecosystem.
-Supported methods currently include no sampling, SMOTE (Synthetic Minority Oversampling
-Technique), Tomek Links, and ADASYN.
+to a given dataset. Supported methods currently include no sampling, SMOTE
+(Synthetic Minority Oversampling Technique), Tomek Links, and ADASYN.
 }

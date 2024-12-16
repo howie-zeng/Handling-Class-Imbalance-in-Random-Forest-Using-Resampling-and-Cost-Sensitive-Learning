@@ -29,13 +29,6 @@ split_data(
 
 \item{seed}{Random seed for reproducibility. Default is 2024.}
 }
-\value{
-A named list of split data for each dataset, with components depending on the splitting strategy:
-\itemize{
-\item For \code{"Bank Fraud Dataset"}: \code{X_train}, \code{y_train}, \code{X_test}, \code{y_test}.
-\item For other datasets: \code{train}, \code{validation}.
-}
-}
 \description{
 This function processes a list of datasets, applying different splitting strategies based on the dataset name.
 For \code{"Bank Fraud Dataset"}, it uses \code{split_train_test_by_month} with predefined parameters.
