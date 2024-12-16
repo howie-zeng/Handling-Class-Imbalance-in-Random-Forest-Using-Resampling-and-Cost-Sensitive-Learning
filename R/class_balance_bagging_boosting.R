@@ -569,7 +569,7 @@ SMOTETomek <-
   }
 #' @export
 TomekLink <-
-    function(tgt='target', data)
+    function(tgt, data)
         # Inputs:
         #   form: model formula
         #   data: dataset
