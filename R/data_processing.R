@@ -59,6 +59,7 @@ process_all_dataframes <- function(df_list) {
         )
     } else if (name == "Credit Card Approval Dataset") {
       # Credit Card Approval Dataset Processing
+      df <- df %>% select(-risk)
 
     }
 
