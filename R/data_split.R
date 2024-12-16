@@ -138,13 +138,15 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
   list(train = train_data, validation = test_data)
 }
 
-convert_to_numeric <- function(df) {
-  df[] <- lapply(df, function(col) {
-    if (is.factor(col) || is.character(col)) {
-      return(as.numeric(as.factor(col)))
+convert_to_numeric <- function(df, target_col='target') {
+  df[] <- lapply(names(df), function(col_name) {
+    if (col_name == target_col) {
+      return(df[[col_name]])  # Keep the target column as is
+    } else if (is.factor(df[[col_name]]) || is.character(df[[col_name]])) {
+      return(as.numeric(as.factor(df[[col_name]])))  # Convert factor/character to numeric
     } else {
-      return(col)
+      return(df[[col_name]])  # Leave numeric columns unchanged
     }
   })
-  return(df)
+  return(as.data.frame(df))
 }
