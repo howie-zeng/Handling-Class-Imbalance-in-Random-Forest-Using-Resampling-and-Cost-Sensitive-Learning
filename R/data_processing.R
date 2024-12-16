@@ -13,9 +13,8 @@ process_all_dataframes <- function(df_list) {
   for (name in names(df_list)) {
     df <- df_list[[name]]
 
-    zero_variance_cols <- sapply(df, function(col) {
-      is.numeric(col) && var(col, na.rm = TRUE) == 0
-    })
+    single_value_cols <- sapply(df, function(col) length(unique(col)) == 1)
+    df <- df[, !single_value_cols, drop = FALSE]
 
     if (name == "HR Dataset") {
       # HR Dataset Processing
