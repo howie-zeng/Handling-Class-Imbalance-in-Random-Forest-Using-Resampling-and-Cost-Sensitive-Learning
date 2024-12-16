@@ -20,6 +20,7 @@ split_data <- function(df_list, target_col, train_ratio = 0.75, maxiter = 2, ntr
   for (name in names(df_list)) {
     cat("Processing dataset:", name, "\n")
     data <- df_list[[name]]  # Extract the dataset
+    data <- convert_to_numeric(data)
 
     if (name == "Bank Fraud Dataset") {
       # Use month-based split for Bank Fraud Dataset
@@ -137,3 +138,13 @@ split_train <- function(data, target_col, train_ratio = 0.75, maxiter = 2, ntree
   list(train = train_data, validation = test_data)
 }
 
+convert_to_numeric <- function(df) {
+  df[] <- lapply(df, function(col) {
+    if (is.factor(col) || is.character(col)) {
+      return(as.numeric(as.factor(col)))
+    } else {
+      return(col)
+    }
+  })
+  return(df)
+}

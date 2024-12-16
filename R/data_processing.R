@@ -69,10 +69,12 @@ process_all_dataframes <- function(df_list) {
     categorical_columns <- sapply(df, is.factor) | sapply(df, is.character)
     df[categorical_columns] <- lapply(df[categorical_columns], as.factor)
 
-    # Add the processed dataframe to the list
+
     processed_list[[name]] <- df
   }
 
   return(processed_list)
 }
+
+
 
