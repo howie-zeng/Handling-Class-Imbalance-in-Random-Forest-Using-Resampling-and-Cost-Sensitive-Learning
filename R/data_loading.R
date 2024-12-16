@@ -98,7 +98,7 @@ process_credit_card_data <- function(df_credit_data, df_credit_card_approval) {
   # Merge with application data and create target
   df_credit_card_approval <- df_credit_card_approval %>%
     inner_join(overdue_status, by = "ID") %>%
-    mutate(target = factor(risk))
+    mutate(target = factor(risk)) %>% select-(risk)
 
   # Binary features
   df_credit_card_approval <- df_credit_card_approval %>%
