@@ -13,8 +13,13 @@ process_all_dataframes <- function(df_list) {
   for (name in names(df_list)) {
     df <- df_list[[name]]
 
+<<<<<<< HEAD
     zero_variance_cols <- sapply(df, var) == 0
     df <- df[, !zero_variance_cols]
+=======
+    zero_variance_cols <- sapply(dataset, var) == 0
+    df <- dataset[, !zero_variance_cols]
+>>>>>>> fda64e79f05978b23117d4cfb09af12ce5eaa404
 
     stratified_sampling <- function(data, target_col, sample_size = 1000000) {
       if (nrow(data) > sample_size) {
