@@ -646,7 +646,7 @@ SMOTE <-
     newData <- rbind(data, newExs)
     return(newData)
   }
-
+#' @export
 Numeralize <-
   function(data, form = NULL)
   {
