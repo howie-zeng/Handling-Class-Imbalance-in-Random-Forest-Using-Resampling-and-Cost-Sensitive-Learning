@@ -1,24 +1,148 @@
 ---
-title: "introduction"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{introduction}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+title: "Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive Learning"
+author: "Haozhe (Howard) Zeng"
+date: "`r Sys.Date()`"
+output: html_document
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
+# Introduction
 
-```{r setup}
-library(ImbalanceRF)
-```
+Class imbalance is a common challenge in machine learning, particularly in classification tasks. This document demonstrates how to use **resampling techniques** (e.g., oversampling and undersampling) and **cost-sensitive learning methods** to address imbalanced data in random forest models.
+
+The document introduces:
+1. **Bagging-based methods** (e.g., SMOTEBagging, RUSBagging, ROSBagging, and RBBagging).
+2. **Boosting-based methods** (e.g., SMOTEBoost, RUSBoost, AdaBoost).
+3. Ensemble methods specifically designed for imbalanced datasets, such as **EasyEnsemble** and **BalanceCascade**.
+
+---
+
+# Required Libraries
+
+Before we begin, ensure you have installed the required packages:
 
 ```{r}
+install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC"))
+library(rpart)
+library(foreach)
+library(doParallel)
+library(RANN)
+library(pROC)
+library(caret)
 
-data_list <- load_data("data/")
+devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning")
+library(ImbalanceRF)
+
+
+calculate_metrics <- function(true_labels, predicted_labels, predicted_probs, weights = NULL) {
+  # Input validation
+  if (length(true_labels) != length(predicted_labels)) {
+    stop("`true_labels` and `predicted_labels` must have the same length.")
+  }
+
+  # Confusion Matrix
+  conf_matrix <- confusionMatrix(factor(predicted_labels), factor(true_labels))
+
+  # ROC AUC
+  if (!is.null(predicted_probs)) {
+    roc_obj <- roc(true_labels, predicted_probs, levels = c(0, 1), direction = "<")
+    auc_value <- auc(roc_obj)
+  } else {
+    auc_value <- NA
+  }
+
+  # Output all metrics as a list
+  list(
+    ConfusionMatrix = conf_matrix,
+    ROCAUC = auc_value
+  )
+}
+```
+
+Bagging-Based Methods (bbaging)
+The bbaging function implements bagging-based resampling methods to handle class imbalance, such as:
+
+Random Under-Sampling (RUSBagging)
+Random Over-Sampling (ROSBagging)
+SMOTE (Synthetic Minority Oversampling Technique) Bagging
+Random Balance Bagging (RBBagging)
+
+Example: SMOTEBagging
+
+```{r}
+# Load and prepare data
+data(iris)
+iris_binary <- iris[iris$Species != "setosa", ]
+x <- iris_binary[, -5]
+y <- as.factor(ifelse(iris_binary$Species == "versicolor", 1, 0))
+
+# Train SMOTEBagging model
+model <- bbaging(x, y, numBag = 10, type = "SMOTEBagging")
+
+# Predictions
+predictions_prob <- predict(model, x, type = "probability")[, 2]
+predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+metrics <- calculate_metrics(y, predictions_label, predictions_prob)
+metrics
+
+
+```
+
+Boosting-Based Methods (bboost)
+The bboost function applies boosting techniques with resampling or cost-sensitive approaches, such as:
+
+AdaBoost
+SMOTEBoost
+RUSBoost
+Cost-Sensitive AdaBoost (AdaC2)
+Example: SMOTEBoost
+
+```{r}
+# Train SMOTEBoost model
+model <- bboost(x, y, iter = 20, type = "SMOTEBoost")
+
+# Predictions
+predictions <- predict(model, x)
+table(predictions, y)
+
+
+```
+
+Ensemble Methods for Imbalanced Data
+EasyEnsemble
+EasyEnsemble creates multiple balanced datasets by repeatedly undersampling the majority class and training individual classifiers.
+
+Example
+```{r}
+# Train EasyEnsemble model
+model <- EasyEnsemble(x, y, iter = 4)
+
+# Predictions
+predictions <- predict(model, x)
+table(predictions, y)
+```
+
+Balance Cascade
+Balance Cascade iteratively trains classifiers while removing easy-to-classify majority instances.
+
+Example
+```{r}
+# Train BalanceCascade model
+model <- BalanceCascade(x, y, iter = 4)
+
+# Predictions
+predictions <- predict(model, x)
+table(predictions, y)
+
+
+```
+
+SMOTETomek
+The SMOTETomek function combines SMOTE oversampling with Tomek link removal to create a balanced dataset.
+
+Example
+
+```{r}
+# Apply SMOTETomek to the dataset
+balanced_data <- SMOTETomek(x, y)
+
 ```
