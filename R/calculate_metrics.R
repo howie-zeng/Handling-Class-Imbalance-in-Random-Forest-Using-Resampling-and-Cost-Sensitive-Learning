@@ -9,12 +9,13 @@
 #' @return A list containing:
 #' \item{ConfusionMatrix}{The confusion matrix.}
 #' \item{ROCAUC}{The area under the ROC curve (AUC).}
-#' @export
+
 #' @examples
 #' true_labels <- c(0, 1, 1, 0, 1)
 #' predicted_labels <- c(0, 1, 0, 0, 1)
 #' predicted_probs <- c(0.2, 0.8, 0.4, 0.1, 0.9)
 #' calculate_metrics(true_labels, predicted_labels, predicted_probs)
+#' @export
 calculate_metrics <- function(true_labels, predicted_labels, predicted_probs, weights = NULL) {
   # Input validation
   if (length(true_labels) != length(predicted_labels)) {

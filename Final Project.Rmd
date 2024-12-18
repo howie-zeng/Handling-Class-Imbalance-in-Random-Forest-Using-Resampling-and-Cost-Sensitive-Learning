@@ -1,0 +1,456 @@
+---
+title: "Final Project"
+author: "Howard"
+date: "2024-12-08"
+output: html_document
+---
+
+
+•	Datasets
+o	Credit Card Fraud Detection
+	https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
+o	Default of Credit Card Clients Dataset
+	https://www.kaggle.com/datasets/uciml/default-of-credit-card-clients-dataset
+<!-- o	Predict Droughts using Weather & Soil Data
+	https://www.kaggle.com/datasets/cdminix/us-drought-meteorological-data -->
+o	HR Analytics: Job Change of Data Scientists
+	https://www.kaggle.com/datasets/arashnic/hr-analytics-job-change-of-data-scientists 
+o	Diabetes Health Indicators Dataset
+	https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset?select=diabetes_012_health_indicators_BRFSS2015.csv
+o	Bank Account Fraud Dataset Suite
+	https://www.kaggle.com/datasets/sgpjesus/bank-account-fraud-dataset-neurips-2022 
+
+Interest in insurance detection
+https://www.kaggle.com/datasets/arashnic/imbalanced-data-practice
+
+
+Reference
+https://statistics.berkeley.edu/sites/default/files/tech-reports/666.pdf
+https://link.springer.com/article/10.1023/A:1010933404324
+https://ieeexplore.ieee.org/document/5128907
+https://ieeexplore.ieee.org/abstract/document/8122151
+
+devtools::document()
+devtools::check()
+devtools::clean_dll()
+devtools::build()
+
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(tidyr)
+library(tidyverse)
+library(randomForest)
+library(missForest)
+library(caret)
+library(robustbase)
+library(smotefamily)
+library(parallel)
+library(data.table)
+library(ParBayesianOptimization)
+library(ranger)
+library(pROC)
+library(doParallel)
+library(ebmc)
+source('model.R')
+
+seed <- 2024
+set.seed(seed)
+target_col = 'target'
+
+# Function to check if the package exists and install if missing
+install_and_load <- function(package_name, github_repo, install=FALSE) {
+  if (!requireNamespace(package_name, quietly = TRUE)) {
+    cat(paste("Package", package_name, "not found. Installing from GitHub...\n"))
+    devtools::install_github(github_repo, force=TRUE)
+  } else if (install) {
+    # detach("package:ImbalanceRF", unload = TRUE)
+    devtools::install_github(github_repo, force=TRUE)
+  } else {
+    cat(paste("Package", package_name, "already installed. Loading it...\n"))
+  }
+  
+  # Load the package
+  library(package_name, character.only = TRUE)
+}
+
+
+# Example Usage
+install_and_load("ImbalanceRF", "howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning", install=TRUE)
+
+data <- load_data("E:/OneDrive/Cornell/Fall 2024/STSCI 6520/Final Project/MyPackage/data")
+
+
+df_list <- process_all_dataframes(copy(data))
+
+
+check_na_in_list <- function(df_list) {
+  sapply(df_list, function(df) any(is.na(df$train)))
+}
+
+# Apply the function to df_split_results
+na_check_results <- check_na_in_list(df_list)
+na_check_results
+```
+
+
+
+```{r}
+test = FALSE
+
+if (test) {
+  print('Test Case')
+  df_test <- list()  # Initialize an empty list to store sampled dataframes
+
+  for (name in names(df_list)) {
+    # Extract the current dataframe
+    data <- df_list[[name]]
+    
+    # Calculate number of rows and sample size
+    num_rows <- nrow(data)
+    sample_size <- ceiling(0.05 * num_rows)
+    
+    # Randomly sample rows
+    sample_indices <- sample(seq_len(num_rows), size = sample_size)
+    
+    # Subset the current dataframe and assign to df_test with name
+    sampled_data <- data[sample_indices, , drop = FALSE]
+    df_test[[name]] <- sampled_data
+  }
+} else {
+  df_test <- copy(df_list)
+}
+
+data_model = split_data(copy(df_test), 'target')
+```
+
+
+
+```{r}
+source('model.R')
+num_cores <- parallel::detectCores() - 3  # Reserve one core for system use
+cl <- parallel::makeCluster(num_cores)
+registerDoParallel(cl)
+clusterExport(cl,c('data_model'))
+clusterEvalQ(cl, expr = {
+  library(ranger)
+  library(pROC)
+})
+
+run_pipeline <- function(data, target_col, sampling_methods) { #"none", "smote", "tomek", "adasyn", "smotemek"
+  
+  # The results list will store the outcome for each sampling method
+  results <- list()
+  
+  for (method in sampling_methods) {
+    cat("Sampling method:", method, "\n")
+    
+    # Apply the specified sampling method to the training set
+    sampled_data <- apply_sampling(data$train, target_col, method)
+    train <- sampled_data
+    test <- data$validation
+    
+    train[[target_col]] <- factor(train[[target_col]])
+    test[[target_col]] <- factor(test[[target_col]])
+    
+    # Define the bounds for Bayesian Optimization
+    # Adjust these as needed based on domain knowledge
+    bounds <- list(
+      mtry = c(max(1, floor(ncol(train) * 0.2)), max(1, floor(ncol(train) * 0.9))),  # Ensure mtry is within valid range
+      min_node_size = c(1, 20),
+      num_trees = c(5, 200)
+    )
+    # Define the objective function to be optimized
+    # This function will be called internally by bayesOpt
+     objective_function <- function(mtry, min_node_size, num_trees) {
+      # Train a Random Forest model using ranger
+      rf_model <- ranger::ranger(
+        formula = as.formula(paste(target_col, "~ .")),
+        data = train,
+        mtry = mtry,
+        num.trees = round(num_trees),
+        min.node.size = round(min_node_size),
+        probability = TRUE,  # Enable probability predictions
+        num.threads = parallel::detectCores() - 1
+      )
+      
+      # Predict probabilities on the test set
+      predictions <- predict(rf_model, test)  # 'response' for classification
+      predicted_probs <- predictions$predictions[, 2]          # Extract probabilities for the positive class
+      
+      # Compute ROC AUC
+      roc_auc <- pROC::auc(pROC::roc(test$target, predicted_probs, levels = c(0, 1), direction = "<"))
+      # Return the ROC AUC as the objective score
+      return(list(Score = as.numeric(roc_auc)))
+    }
+
+    
+    # Run Bayesian Optimization
+    bayes_opt_time <- system.time({
+      opt_result <- bayesOpt(
+        FUN = objective_function,
+        bounds = bounds,
+        initPoints = 7,  # Specify either `initPoints`
+        iters.n = num_cores,    # Number of optimization iterations
+        iters.k = num_cores,
+        verbose = 1,
+        parallel = TRUE,
+      )
+    })
+    
+    # Extract the best hyperparameters found
+    best_params <- getBestPars(opt_result)
+    
+    # Train the final model using the best parameters
+    final_model <- ranger::ranger(
+      formula = as.formula(paste(target_col, "~ .")),
+      data = train,
+      mtry = round(best_params[["mtry"]]),
+      num.trees = round(best_params[["num_trees"]]),
+      min.node.size = round(best_params[["min_node_size"]]),
+      probability = TRUE,                     # Enable probability predictions
+      num.threads = parallel::detectCores() - 1  # Use available cores for parallelization
+    )
+    
+    # Evaluate the final model on the test set
+    final_probs <- predict(final_model, test, type = "response")$predictions[, 2]
+    final_labels <- ifelse(final_probs >= 0.5, 1, 0)
+    metrics <- calculate_metrics(test$target, final_labels, final_probs)
+    
+    # Store the results
+    results[[method]] <- list(
+      Metrics = metrics,
+      BestParams = best_params,
+      Runtime = bayes_opt_time["elapsed"]
+    )
+  }
+  
+  return(results)
+}
+
+run_pipeline_all <- function(df_list, target_col, sampling_methods = c("none", "smote", "tomek", "adasyn", "smotemek")) { #"none", "smote", "tomek", "adasyn", "smotemek"
+  
+  # The outer results list will store results for each dataset
+  all_results <- list()
+  
+  # Iterate over each dataset in the list
+  for (dataset_name in names(df_list)) {
+    cat("Processing dataset:", dataset_name, "\n")
+    data <- df_list[[dataset_name]]  # Extract the dataset
+    
+    # Call the `run_pipeline` function for this dataset
+    dataset_results <- run_pipeline(data, target_col, sampling_methods)
+    
+    # Store the results for this dataset
+    all_results[[dataset_name]] <- dataset_results
+  }
+  
+  return(all_results)
+}
+
+results_results_resampling<- run_pipeline_all(data_model, target_col = "target")
+
+stopCluster(cl)
+registerDoSEQ()
+
+
+saveRDS(results_results_resampling, file = "results_results_resampling.rds")
+```
+
+
+```{r}
+# run_smotebagging <- function(data, target_col='target') {
+#   target_formula <- as.formula(paste(target_col, "~ ."))
+#   # Train the SMOTEBagging model
+#   model <- sbag(
+#     formula = target_formula,
+#     data = data$train,
+#     size = 40,       # Number of weak learners
+#     alg = "rf",         # Algorithm: "rf", "cart", "c50", "nb", or "svm"
+#     smote.k = 5, # Number of nearest neighbors for SMOTE
+#     rf.ntree = 50 # Number of trees in each Random Forest
+#   )
+#   
+#   predicted_probs <- predict(model, newdata = data$validation, type = "prob")
+#   roc_auc <- pROC::auc(pROC::roc(data$validation[[target_col]], predicted_probs), levels = c(0, 1), direction = "<")
+#   return(list(Model = model, ROC_AUC = roc_auc))
+# }
+# 
+# 
+# # Function to run BBoost
+# run_smoteboosting <- function(data, target_col='target') {
+#   formula <- as.formula(paste(target_col, "~ ."))
+#   
+#   # Train the SMOTEBoost model using the 'sbo' function
+#   model <- sbo(
+#     formula = formula,
+#     data = data$train,
+#     size = 100,        # Number of weak learners
+#     alg = "rf",       # Base learner (Random Forest in this case)
+#     over = 200,       # Over-sampling rate for SMOTE
+#     rf.ntree = 50     # Number of trees in Random Forest
+#   )
+#   
+#   # Predict on the validation data
+#   predicted_probs <- predict(model, newdata = data$validation, type = "prob")
+#   
+#   # Compute ROC AUC
+#   roc_auc <- pROC::auc(pROC::roc(data$validation[[target_col]], predicted_probs), levels = c(0, 1), direction = "<")
+#   
+#   return(list(Model = model, ROC_AUC = roc_auc))
+# }
+# 
+# # Function to run BalanceCascade
+# run_BalanceCascade <- function(data, target_col='target') {
+#   x <- data$train[, !colnames(data$train) %in% target_col]
+#   y <- data$train[[target_col]]
+#   
+#   model <- BalanceCascade(x, y, iter = 4)
+#   
+#   predictions <- predict(model, data$validation[, !colnames(data$validation) %in% target_col], type = "class")
+#   roc_auc <- pROC::auc(pROC::roc(data$validation[[target_col]], as.numeric(predictions)))
+#   
+#   return(list(Model = model, ROC_AUC = roc_auc))
+# }
+# 
+# run_EasyEnsemble <- function(data, target_col='target') {
+#   x <- data$train[, !colnames(data$train) %in% target_col]
+#   y <- data$train[[target_col]]
+#   
+#   model <- EasyEnsemble(x, y, iter = 4, allowParallel =TRUE)
+#   
+#   predictions <- predict(model, data$validation[, !colnames(data$validation) %in% target_col], type = "class")
+#   roc_auc <- pROC::auc(pROC::roc(data$validation[[target_col]], as.numeric(predictions)))
+#   
+#   return(list(Model = model, ROC_AUC = roc_auc))
+# }
+# 
+# # Function to run cost-sensitive ranger
+# run_cost_sensitive_ranger <- function(data, target_col='target') {
+#   train <- data$train
+#   train[[target_col]] <- factor(train[[target_col]])
+#   
+#   weights <- ifelse(train[[target_col]] == levels(train[[target_col]])[1], 0.1, 1)
+#   
+#   model <- ranger::ranger(
+#     formula = as.formula(paste(target_col, "~ .")),
+#     data = train,
+#     case.weights = weights,
+#     probability = TRUE,
+#     num.trees = 200
+#   )
+#   
+#   predictions <- predict(model, data$validation, type = "response")$predictions[, 2]
+#   roc_auc <- pROC::auc(pROC::roc(data$validation[[target_col]], predictions))
+#   
+#   return(list(Model = model, ROC_AUC = roc_auc))
+# }
+```
+
+
+
+```{r}
+run_pipeline <- function(data, target_col, methods) {
+  results <- list()
+  
+  for (method in methods) {
+    cat("Running method:", method, "\n")
+    train <- data$train
+    test <- data$validation
+    
+    runtime <- system.time({
+      result <- run_model_with_bayesopt(train, test, target_col, method)
+      results[[method]] <- result
+    })
+    results[[method]]$Runtime <- runtime["elapsed"]
+  }
+  
+  return(results)
+}
+
+run_pipeline_all <- function(df_list, target_col, methods) {
+  all_results <- list()
+  
+  for (dataset_name in names(df_list)) {
+    cat("Processing dataset:", dataset_name, "\n")
+    data <- df_list[[dataset_name]]
+    all_results[[dataset_name]] <- run_pipeline(data, target_col, methods)
+  }
+  
+  return(all_results)
+}
+
+
+num_cores <- parallel::detectCores() - 3  # Reserve 3 cores
+cl <- parallel::makeCluster(num_cores)
+registerDoParallel(cl)
+clusterExport(cl, c("data_model"))  # Export the data model
+clusterEvalQ(cl, expr = {
+  library(ranger)
+  library(pROC)
+  library(ebmc)
+})
+
+source('model.R') # does not work well for other method, no convergence
+methods_to_run <- c("cost-sensitive-ranger") #"cost-sensitive-ranger", "SMOTEBagging", "SMOTEBoosting", "BalanceCascade", "EasyEnsemble"
+final_results_cost_sensitive_learning <- run_pipeline_all(data_model, target_col = "target", methods = methods_to_run)
+
+stopCluster(cl)
+registerDoSEQ()
+
+saveRDS(final_results_cost_sensitive_learning, file = "final_results_cost_sensitive_learning.rds")
+```
+
+
+```{r}
+run_pipeline_all_algorithmic <- function(df_list, target_col, methods) {
+  all_results <- list()
+  
+  for (dataset_name in names(df_list)) {
+    cat("Processing dataset:", dataset_name, "\n")
+    data <- df_list[[dataset_name]]
+    train <- data$train
+    test <- data$validation
+    
+    dataset_results <- list()
+    
+    for (method in methods) {
+      cat("  Running method:", method, "\n")
+      runtime <- system.time({
+        result <- evaluate_model(train, test, target_col, method)
+      })
+      result$Runtime <- runtime["elapsed"]
+      dataset_results[[method]] <- result
+    }
+    
+    all_results[[dataset_name]] <- dataset_results
+  }
+  
+  return(all_results)
+}
+source('model.R')
+# Define methods to evaluate
+methods_to_run <- c("SMOTEBagging", "SMOTEBoosting", "EasyEnsemble", 
+                    "BalanceCascade")
+
+# Run the pipeline on all datasets
+final_results_algorithmic <- run_pipeline_all_algorithmic(data_model, target_col = "target", methods = methods_to_run)
+
+# Save the results to a file
+saveRDS(final_results_algorithmic, file = "final_results_algorithmic.rds")
+```
+
+
+```{r}
+for (data in names(final_results_algorithmic)) {
+  for (model in names(final_results_algorithmic[[data]])) {
+    final_results_algorithmic[[data]][[model]]$Model <- NULL
+  }
+}
+
+    
+
+```
+

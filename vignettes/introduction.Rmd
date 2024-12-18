@@ -25,6 +25,12 @@ Class imbalance is a common challenge in machine learning, particularly in class
 Before proceeding, ensure the necessary packages are installed and loaded:
 
 ```{r}
+# Install and load ImbalanceRF package
+devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning")
+library(ImbalanceRF)
+```
+
+```{r}
 # Install required packages
 install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr", "randomForest"))
 
@@ -38,11 +44,6 @@ library(caret)
 library(mlbench)
 library(dplyr)
 library(randomForest)
-
-# Install and load ImbalanceRF package
-devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning")
-library(ImbalanceRF)
-
 
 # Load dataset
 data("PimaIndiansDiabetes")
