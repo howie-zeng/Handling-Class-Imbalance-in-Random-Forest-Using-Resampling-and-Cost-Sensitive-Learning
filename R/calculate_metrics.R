@@ -9,6 +9,8 @@
 #' @return A list containing:
 #' \item{ConfusionMatrix}{The confusion matrix.}
 #' \item{ROCAUC}{The area under the ROC curve (AUC).}
+#' @importFrom pROC roc auc
+#' @importFrom caret confusionMatrix
 
 #' @examples
 #' true_labels <- c(0, 1, 1, 0, 1)
