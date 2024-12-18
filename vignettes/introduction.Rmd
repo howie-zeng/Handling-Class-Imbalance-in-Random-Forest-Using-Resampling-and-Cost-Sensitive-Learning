@@ -1,27 +1,34 @@
 ---
 title: "Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive Learning"
 author: "Haozhe (Howard) Zeng"
-date: "`r Sys.Date()`"
 output: html_document
 ---
 
-# Introduction
+# Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive Learning
 
-Class imbalance is a common challenge in machine learning, particularly in classification tasks. This document demonstrates how to use **resampling techniques** (e.g., oversampling and undersampling) and **cost-sensitive learning methods** to address imbalanced data in random forest models.
+Class imbalance is a common challenge in machine learning, particularly in classification tasks. This document demonstrates the use of **resampling techniques** (e.g., oversampling and undersampling) and **cost-sensitive learning methods** to address imbalanced data in random forest models.
 
-The document introduces:
-1. **Bagging-based methods** (e.g., SMOTEBagging, RUSBagging, ROSBagging, and RBBagging).
-2. **Boosting-based methods** (e.g., SMOTEBoost, RUSBoost, AdaBoost).
-3. Ensemble methods specifically designed for imbalanced datasets, such as **EasyEnsemble** and **BalanceCascade**.
+### Key Topics Covered:
+1. **Bagging-Based Methods**:
+   - SMOTEBagging, RUSBagging, ROSBagging, Random Balance Bagging (RBBagging)
+2. **Boosting-Based Methods**:
+   - SMOTEBoost, RUSBoost, AdaBoost, Cost-Sensitive AdaBoost (AdaC2)
+3. **Specialized Ensemble Methods**:
+   - EasyEnsemble, BalanceCascade
+4. **Hybrid Methods**:
+   - SMOTETomek (SMOTE combined with Tomek link removal)
 
 ---
 
 # Required Libraries
 
-Before we begin, ensure you have installed the required packages:
+Before proceeding, ensure the necessary packages are installed and loaded:
 
 ```{r}
-install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr"))
+# Install required packages
+install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr", "randomForest"))
+
+# Load libraries
 library(rpart)
 library(foreach)
 library(doParallel)
@@ -30,108 +37,66 @@ library(pROC)
 library(caret)
 library(mlbench)
 library(dplyr)
+library(randomForest)
 
-
+# Install and load ImbalanceRF package
 devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning")
 library(ImbalanceRF)
 
 
-calculate_metrics <- function(true_labels, predicted_labels, predicted_probs, weights = NULL) {
-  # Input validation
-  if (length(true_labels) != length(predicted_labels)) {
-    stop("`true_labels` and `predicted_labels` must have the same length.")
-  }
-
-  # Confusion Matrix
-  conf_matrix <- confusionMatrix(factor(predicted_labels), factor(true_labels))
-
-  # ROC AUC
-  if (!is.null(predicted_probs)) {
-    roc_obj <- roc(true_labels, predicted_probs, levels = c(0, 1), direction = "<")
-    auc_value <- auc(roc_obj)
-  } else {
-    auc_value <- NA
-  }
-
-  TP <- conf_matrix$table[2, 2]
-  FP <- conf_matrix$table[1, 2]
-  TN <- conf_matrix$table[1, 1]
-  FN <- conf_matrix$table[2, 1]
-
-  accuracy <- (TP + TN) / sum(conf_matrix$table)
-  weighted_accuracy <- (TP / (TP + FN) + TN / (TN + FP)) / 2
-  precision <- TP / (TP + FP)
-  recall <- TP / (TP + FN)
-  f1 <- 2 * (precision * recall) / (precision + recall)
-  specificity <- TN / (TN + FP)
-  gmean <- sqrt(recall * specificity)
-
-  # Output all metrics as a list
-  list(
-    ConfusionMatrix = conf_matrix,
-    Accuracy = accuracy,
-    WeightedAccuracy = weighted_accuracy,
-    Precision = precision,
-    Recall = recall,
-    F1 = f1,
-    Specificity = specificity,
-    GMean = gmean,
-    ROCAUC = auc_value
-  )
-}
-```
-
-Bagging-Based Methods (bbaging)
-The bbaging function implements bagging-based resampling methods to handle class imbalance, such as:
-
-Random Under-Sampling (RUSBagging)
-Random Over-Sampling (ROSBagging)
-SMOTE (Synthetic Minority Oversampling Technique) Bagging
-Random Balance Bagging (RBBagging)
-
-
-
-```{r}
+# Load dataset
 data("PimaIndiansDiabetes")
 pima <- PimaIndiansDiabetes
 
-x <- PimaIndiansDiabetes %>% select(-diabetes)
-y <- as.factor(ifelse(PimaIndiansDiabetes$diabetes == "pos", 1, 0))
-table(y)
-```
-regular random forest
-```{r}
 
-rf_model <- randomForest(x, y, ntree = 100, importance = TRUE)
-
-# Predictions
-predictions_prob <- predict(rf_model, x, type = "prob")[, 2]
-predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
-metrics <- calculate_metrics(y, predictions_label, predictions_prob)
-print(metrics)
-
+# Prepare features and labels
+x <- pima %>% select(-diabetes)
+y <- as.factor(ifelse(pima$diabetes == "pos", 1, 0))
+table(y) # Check class distribution
 
 ```
+
+# Bagging-Based Methods (bbaging)
+The `bbaging` function implements bagging-based resampling methods, including:
+
+- Random Under-Sampling (RUSBagging)
+- Random Over-Sampling (ROSBagging)
+- SMOTE (Synthetic Minority Oversampling Technique) Bagging
+- Random Balance Bagging (RBBagging)
 
 Example: SMOTEBagging
 ```{r}
+# Load dataset
+data("PimaIndiansDiabetes")
+pima <- PimaIndiansDiabetes
+
+# Prepare features and labels
+x <- pima %>% select(-diabetes)
+y <- as.factor(ifelse(pima$diabetes == "pos", 1, 0))
+table(y) # Check class distribution
+
 # Train SMOTEBagging model
 model <- bbaging(x, y, numBag = 10, type = "SMOTEBagging")
 
 # Predictions
 predictions_prob <- predict(model, x, type = "probability")[, 2]
 predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+
+# Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
+
 ```
 
-Boosting-Based Methods (bboost)
-The bboost function applies boosting techniques with resampling or cost-sensitive approaches, such as:
 
-AdaBoost
-SMOTEBoost
-RUSBoost
-Cost-Sensitive AdaBoost (AdaC2)
+# Boosting-Based Methods (bboost)
+The `bboost` function applies boosting with resampling or cost-sensitive approaches, such as:
+
+- AdaBoost
+- SMOTEBoost
+- RUSBoost
+- Cost-Sensitive AdaBoost (AdaC2)
+
 Example: SMOTEBoost
 
 ```{r}
@@ -141,16 +106,19 @@ model <- bboost(x, y, iter = 20, type = "SMOTEBoost")
 # Predictions
 predictions_prob <- predict(model, x, type = "probability")[, 2]
 predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+
+# Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
 
+
 ```
 
-Ensemble Methods for Imbalanced Data
-EasyEnsemble
-EasyEnsemble creates multiple balanced datasets by repeatedly undersampling the majority class and training individual classifiers.
+# EasyEnsemble
+EasyEnsemble creates multiple balanced datasets by undersampling the majority class and training individual classifiers.
 
-Example
+Example: EasyEnsemble
+
 ```{r}
 # Train EasyEnsemble model
 model <- EasyEnsemble(x, y, iter = 4)
@@ -158,14 +126,20 @@ model <- EasyEnsemble(x, y, iter = 4)
 # Predictions
 predictions_prob <- predict(model, x, type = "probability")[, 2]
 predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+
+# Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
+
+
 ```
 
-Balance Cascade
+
+# Balance Cascade
 Balance Cascade iteratively trains classifiers while removing easy-to-classify majority instances.
 
-Example
+Example: Balance Cascade
+
 ```{r}
 # Train BalanceCascade model
 model <- BalanceCascade(x, y, iter = 4)
@@ -173,23 +147,29 @@ model <- BalanceCascade(x, y, iter = 4)
 # Predictions
 predictions_prob <- predict(model, x, type = "probability")[, 2]
 predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+
+# Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
+
+
 ```
 
-SMOTETomek
-The SMOTETomek function combines SMOTE oversampling with Tomek link removal to create a balanced dataset.
+# Hybrid Methods: SMOTETomek
+SMOTETomek combines SMOTE oversampling with Tomek link removal for better balancing of the dataset.
 
-Example
+Example: SMOTETomek
 
 ```{r}
-# plot distribution of y
+# Plot original class distribution
 table(y)
 
-# Apply SMOTETomek to the dataset
-balanced_data <- SMOTETomek(x, y)
+# Apply SMOTETomek
+balanced_data <- SMOTETomek(x, y, percOver = 100)
 
-# plot distribution of y
+# Plot new class distribution
 table(balanced_data$y)
 
+
 ```
+
