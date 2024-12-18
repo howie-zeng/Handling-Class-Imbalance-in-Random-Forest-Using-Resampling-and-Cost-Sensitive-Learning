@@ -1,7 +1,10 @@
 ---
-title: "Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive Learning"
+title: "Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive
+  Learning"
 author: "Haozhe (Howard) Zeng"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 # Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive Learning
