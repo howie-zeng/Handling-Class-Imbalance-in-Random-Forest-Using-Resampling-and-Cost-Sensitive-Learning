@@ -10,14 +10,15 @@
 load_data <- function(data_dir = "data/") {
   # Load datasets with error handling
   tryCatch({
-    df_hr <- read.csv(file.path(data_dir, "hr.csv"), stringsAsFactors = FALSE)
-    df_credit_card_default <- read.csv(file.path(data_dir, "UCI_Credit_Card.csv"), stringsAsFactors = FALSE)
-    df_credit_card_approval <- read.csv(file.path(data_dir, "Application_record.csv"), stringsAsFactors = FALSE)
-    df_credit_data <- read.csv(file.path(data_dir, "credit_record.csv"))
-    df_diabetes <- read.csv(file.path(data_dir, "diabetes_binary_health_indicators_BRFSS2015.csv"), stringsAsFactors = FALSE)
-    df_insurance <- read.csv(file.path(data_dir, "insurance_train.csv"), stringsAsFactors = FALSE)
-    df_credit_card_fraud <- read.csv(file.path(data_dir, "creditcard.csv"), stringsAsFactors = FALSE)
-    # df_bank_fraud <- read.csv(file.path(data_dir, "Base.csv"), stringsAsFactors = FALSE)
+    df_hr <- readRDS(file.path(data_dir, "hr.rds"))
+    df_credit_card_default <- readRDS(file.path(data_dir, "UCI_Credit_Card.rds"))
+    df_credit_card_approval <- readRDS(file.path(data_dir, "Application_record.rds"))
+    df_credit_data <- readRDS(file.path(data_dir, "credit_record.rds"))
+    df_diabetes <- readRDS(file.path(data_dir, "diabetes_binary_health_indicators_BRFSS2015.rds"))
+    df_insurance <- readRDS(file.path(data_dir, "insurance_train.rds"))
+    df_credit_card_fraud <- readRDS(file.path(data_dir, "creditcard.rds"))
+    # Uncomment and adjust for additional datasets
+    # df_bank_fraud <- readRDS(file.path(data_dir, "Base.rds"))
   }, error = function(e) {
     stop("Error loading data: ", e$message)
   })

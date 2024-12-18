@@ -17,3 +17,8 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(ImbalanceRF)
 ```
+
+```{r}
+
+data_list <- load_data("data/")
+```
