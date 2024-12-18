@@ -26,24 +26,22 @@ Before proceeding, ensure the necessary packages are installed and loaded:
 
 ```{r}
 # Install and load ImbalanceRF package
-devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning")
+devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning", force = TRUE)
 library(ImbalanceRF)
 ```
 
 ```{r}
-# Install required packages
-install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr", "randomForest"))
+required_packages <- c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr", "randomForest")
+
+# Check and install missing packages
+for (pkg in required_packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+}
 
 # Load libraries
-library(rpart)
-library(foreach)
-library(doParallel)
-library(RANN)
-library(pROC)
-library(caret)
-library(mlbench)
-library(dplyr)
-library(randomForest)
+lapply(required_packages, library, character.only = TRUE)
 
 # Load dataset
 data("PimaIndiansDiabetes")
