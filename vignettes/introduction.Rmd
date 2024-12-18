@@ -1,6 +1,5 @@
 ---
-title: "Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive
-  Learning"
+title: "Handling Class Imbalance in Random Forest Using Resampling and Cost-Sensitive Learning"
 author: "Haozhe (Howard) Zeng"
 output:
   pdf_document: default
@@ -45,20 +44,17 @@ for (pkg in required_packages) {
 
 # Load libraries
 lapply(required_packages, library, character.only = TRUE)
-
 ```
+
 ```{r}
 # Load dataset
 data("PimaIndiansDiabetes")
 pima <- PimaIndiansDiabetes
 
-
 # Prepare features and labels
 x <- pima %>% select(-diabetes)
 y <- as.factor(ifelse(pima$diabetes == "pos", 1, 0))
 table(y) # Check class distribution
-
-
 ```
 
 # Bagging-Based Methods (bbaging)
@@ -69,17 +65,19 @@ The `bbaging` function implements bagging-based resampling methods, including:
 - SMOTE (Synthetic Minority Oversampling Technique) Bagging
 - Random Balance Bagging (RBBagging)
 
+### Parameters for `bbaging`:
+- **`x`**: A data frame containing the predictor variables.
+- **`y`**: A factor representing the response variable.
+- **`numBag`**: The number of bagging iterations to perform. Default is `10`.
+- **`type`**: The type of bagging method to use. Options include:
+  - `"SMOTEBagging"`: Uses SMOTE for oversampling.
+  - `"RUSBagging"`: Applies random undersampling.
+  - `"ROSBagging"`: Performs random oversampling.
+  - `"RBBagging"`: Uses random balance bagging.
+
 Example: SMOTEBagging
+
 ```{r}
-# Load dataset
-data("PimaIndiansDiabetes")
-pima <- PimaIndiansDiabetes
-
-# Prepare features and labels
-x <- pima %>% select(-diabetes)
-y <- as.factor(ifelse(pima$diabetes == "pos", 1, 0))
-table(y) # Check class distribution
-
 # Train SMOTEBagging model
 model <- bbaging(x, y, numBag = 10, type = "SMOTEBagging")
 
@@ -90,9 +88,7 @@ predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
 # Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
-
 ```
-
 
 # Boosting-Based Methods (bboost)
 The `bboost` function applies boosting with resampling or cost-sensitive approaches, such as:
@@ -101,6 +97,16 @@ The `bboost` function applies boosting with resampling or cost-sensitive approac
 - SMOTEBoost
 - RUSBoost
 - Cost-Sensitive AdaBoost (AdaC2)
+
+### Parameters for `bboost`:
+- **`x`**: A data frame containing the predictor variables.
+- **`y`**: A factor representing the response variable.
+- **`iter`**: The number of boosting iterations. Default is `20`.
+- **`type`**: The type of boosting method to use. Options include:
+  - `"AdaBoost"`: Standard AdaBoost.
+  - `"SMOTEBoost"`: Combines boosting with SMOTE.
+  - `"RUSBoost"`: Combines boosting with random undersampling.
+  - `"AdaC2"`: Cost-sensitive AdaBoost.
 
 Example: SMOTEBoost
 
@@ -115,12 +121,16 @@ predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
 # Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
-
-
 ```
 
 # EasyEnsemble
 EasyEnsemble creates multiple balanced datasets by undersampling the majority class and training individual classifiers.
+
+### Parameters for `EasyEnsemble`:
+- **`x`**: A data frame containing the predictor variables.
+- **`y`**: A factor representing the response variable.
+- **`iter`**: The number of ensemble iterations. Default is `4`.
+- **`allowParallel`**: A logical indicating whether to enable parallel computation. Default is `FALSE`.
 
 Example: EasyEnsemble
 
@@ -135,13 +145,15 @@ predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
 # Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
-
-
 ```
-
 
 # Balance Cascade
 Balance Cascade iteratively trains classifiers while removing easy-to-classify majority instances.
+
+### Parameters for `BalanceCascade`:
+- **`x`**: A data frame containing the predictor variables.
+- **`y`**: A factor representing the response variable.
+- **`iter`**: The number of cascade iterations. Default is `4`.
 
 Example: Balance Cascade
 
@@ -156,12 +168,16 @@ predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
 # Calculate metrics
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
 print(metrics)
-
-
 ```
 
 # Hybrid Methods: SMOTETomek
 SMOTETomek combines SMOTE oversampling with Tomek link removal for better balancing of the dataset.
+
+### Parameters for `SMOTETomek`:
+- **`x`**: A data frame containing the predictor variables.
+- **`y`**: A factor representing the response variable.
+- **`percOver`**: The percentage of oversampling to apply. Default is `100`.
+- **`k`**: The number of nearest neighbors to use in SMOTE. Default is `5`.
 
 Example: SMOTETomek
 
@@ -176,7 +192,4 @@ balanced_data <- SMOTETomek(x, y, percOver = 100)
 # Plot new class distribution
 print("After")
 table(balanced_data$y)
-
-
 ```
-
