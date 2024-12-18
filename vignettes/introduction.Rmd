@@ -21,13 +21,16 @@ The document introduces:
 Before we begin, ensure you have installed the required packages:
 
 ```{r}
-install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC"))
+install.packages(c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr"))
 library(rpart)
 library(foreach)
 library(doParallel)
 library(RANN)
 library(pROC)
 library(caret)
+library(mlbench)
+library(dplyr)
+
 
 devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning")
 library(ImbalanceRF)
@@ -50,9 +53,29 @@ calculate_metrics <- function(true_labels, predicted_labels, predicted_probs, we
     auc_value <- NA
   }
 
+  TP <- conf_matrix$table[2, 2]
+  FP <- conf_matrix$table[1, 2]
+  TN <- conf_matrix$table[1, 1]
+  FN <- conf_matrix$table[2, 1]
+
+  accuracy <- (TP + TN) / sum(conf_matrix$table)
+  weighted_accuracy <- (TP / (TP + FN) + TN / (TN + FP)) / 2
+  precision <- TP / (TP + FP)
+  recall <- TP / (TP + FN)
+  f1 <- 2 * (precision * recall) / (precision + recall)
+  specificity <- TN / (TN + FP)
+  gmean <- sqrt(recall * specificity)
+
   # Output all metrics as a list
   list(
     ConfusionMatrix = conf_matrix,
+    Accuracy = accuracy,
+    WeightedAccuracy = weighted_accuracy,
+    Precision = precision,
+    Recall = recall,
+    F1 = f1,
+    Specificity = specificity,
+    GMean = gmean,
     ROCAUC = auc_value
   )
 }
@@ -66,15 +89,32 @@ Random Over-Sampling (ROSBagging)
 SMOTE (Synthetic Minority Oversampling Technique) Bagging
 Random Balance Bagging (RBBagging)
 
-Example: SMOTEBagging
+
 
 ```{r}
-# Load and prepare data
-data(iris)
-iris_binary <- iris[iris$Species != "setosa", ]
-x <- iris_binary[, -5]
-y <- as.factor(ifelse(iris_binary$Species == "versicolor", 1, 0))
+data("PimaIndiansDiabetes")
+pima <- PimaIndiansDiabetes
 
+x <- PimaIndiansDiabetes %>% select(-diabetes)
+y <- as.factor(ifelse(PimaIndiansDiabetes$diabetes == "pos", 1, 0))
+table(y)
+```
+regular random forest
+```{r}
+
+rf_model <- randomForest(x, y, ntree = 100, importance = TRUE)
+
+# Predictions
+predictions_prob <- predict(rf_model, x, type = "prob")[, 2]
+predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+metrics <- calculate_metrics(y, predictions_label, predictions_prob)
+print(metrics)
+
+
+```
+
+Example: SMOTEBagging
+```{r}
 # Train SMOTEBagging model
 model <- bbaging(x, y, numBag = 10, type = "SMOTEBagging")
 
@@ -82,9 +122,7 @@ model <- bbaging(x, y, numBag = 10, type = "SMOTEBagging")
 predictions_prob <- predict(model, x, type = "probability")[, 2]
 predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
 metrics <- calculate_metrics(y, predictions_label, predictions_prob)
-metrics
-
-
+print(metrics)
 ```
 
 Boosting-Based Methods (bboost)
@@ -101,9 +139,10 @@ Example: SMOTEBoost
 model <- bboost(x, y, iter = 20, type = "SMOTEBoost")
 
 # Predictions
-predictions <- predict(model, x)
-table(predictions, y)
-
+predictions_prob <- predict(model, x, type = "probability")[, 2]
+predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+metrics <- calculate_metrics(y, predictions_label, predictions_prob)
+print(metrics)
 
 ```
 
@@ -117,8 +156,10 @@ Example
 model <- EasyEnsemble(x, y, iter = 4)
 
 # Predictions
-predictions <- predict(model, x)
-table(predictions, y)
+predictions_prob <- predict(model, x, type = "probability")[, 2]
+predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+metrics <- calculate_metrics(y, predictions_label, predictions_prob)
+print(metrics)
 ```
 
 Balance Cascade
@@ -130,10 +171,10 @@ Example
 model <- BalanceCascade(x, y, iter = 4)
 
 # Predictions
-predictions <- predict(model, x)
-table(predictions, y)
-
-
+predictions_prob <- predict(model, x, type = "probability")[, 2]
+predictions_label <- ifelse(predictions_prob > 0.5, 1, 0)
+metrics <- calculate_metrics(y, predictions_label, predictions_prob)
+print(metrics)
 ```
 
 SMOTETomek
@@ -142,7 +183,13 @@ The SMOTETomek function combines SMOTE oversampling with Tomek link removal to c
 Example
 
 ```{r}
+# plot distribution of y
+table(y)
+
 # Apply SMOTETomek to the dataset
 balanced_data <- SMOTETomek(x, y)
+
+# plot distribution of y
+table(balanced_data$y)
 
 ```

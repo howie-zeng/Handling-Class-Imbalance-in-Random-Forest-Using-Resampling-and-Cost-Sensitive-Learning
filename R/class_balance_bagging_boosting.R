@@ -830,7 +830,6 @@ EasyEnsemble.data.frame <-
 
     fitter <- function(tgt, data, indexMaj, numMin, indexMin)
     {
-      source("code/Ensemble-based level/BalanceBoost.R")
       indexMajCurrent <- sample(indexMaj, numMin)
       dataCurrent <- data[c(indexMin, indexMajCurrent),]
       out <- bboost.data.frame(dataCurrent[, -tgt], dataCurrent[,tgt], type = "AdaBoost")
