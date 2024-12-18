@@ -24,13 +24,13 @@ Class imbalance is a common challenge in machine learning, particularly in class
 
 Before proceeding, ensure the necessary packages are installed and loaded:
 
-```{r}
+```{r message=TRUE, warning=TRUE, include=FALSE}
 # Install and load ImbalanceRF package
 devtools::install_github("howie-zeng/Handling-Class-Imbalance-in-Random-Forest-Using-Resampling-and-Cost-Sensitive-Learning", force = TRUE)
 library(ImbalanceRF)
 ```
 
-```{r}
+```{r message=TRUE, warning=TRUE, include=FALSE}
 required_packages <- c("rpart", "foreach", "doParallel", "RANN", "pROC", "mlbench", "dplyr", "randomForest")
 
 # Check and install missing packages
@@ -43,6 +43,8 @@ for (pkg in required_packages) {
 # Load libraries
 lapply(required_packages, library, character.only = TRUE)
 
+```
+```{r}
 # Load dataset
 data("PimaIndiansDiabetes")
 pima <- PimaIndiansDiabetes
@@ -52,6 +54,7 @@ pima <- PimaIndiansDiabetes
 x <- pima %>% select(-diabetes)
 y <- as.factor(ifelse(pima$diabetes == "pos", 1, 0))
 table(y) # Check class distribution
+
 
 ```
 
