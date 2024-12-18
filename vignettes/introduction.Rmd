@@ -161,12 +161,14 @@ Example: SMOTETomek
 
 ```{r}
 # Plot original class distribution
+print("Before")
 table(y)
 
 # Apply SMOTETomek
 balanced_data <- SMOTETomek(x, y, percOver = 100)
 
 # Plot new class distribution
+print("After")
 table(balanced_data$y)
 
 
