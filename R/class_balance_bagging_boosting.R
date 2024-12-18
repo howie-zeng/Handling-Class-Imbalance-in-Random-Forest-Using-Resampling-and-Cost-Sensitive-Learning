@@ -259,7 +259,7 @@ bboost.data.frame <-
 
       if (type == "RUSBoost" | type == "SMOTEBoost")
       {
-        weakPrediction <- base$pred(H[[t]], data, type = "probability")
+        weakPrediction <- base$pred(H[[t]], data, type = "prob")
         loss <- sum(oldWeight * abs(weakPrediction[, 2] - as.numeric(data[, tgt]) + 1))
         beta <- loss/(1-loss)
         alpha[t]  <- log(1/beta)
